@@ -1,63 +1,96 @@
 import maya.cmds as cmds
 
-#basic mushroom
-outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942, 0), (0.034739, 4.932942, 0), (8.812134, 5.859316, 0), (9.043727, 3.242309, 0), (9.275321, 0.625303, 0), (11.938646, 1.019012, 0), (9.66903, -0.741099, 0), (7.399413, -2.50121, 0), (6.959385, -1.389561, 0), (5.662462, -1.389561, 0), (4.365538, -1.389561, 0), (2.837021, -0.764259, 0), (2.582268, -1.78327, 0), (2.327515, -2.802282, 0), (2.744383, -3.149672, 0), (2.813861, -4.377118, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
-mushroom = cmds.revolve(outline, ch=1, po=1, rn=0, ssw=0, esw=360, ut=0, tol=0.01, degree=3, s=12, ulp=1, ax=(0, 1, 0), n="mushroom")
-mushroom = cmds.polyNormal(mushroom, normalMode=0, userNormalMode=1, ch=1, n="mushroom")
-cmds.delete(outline)
+#UI
+window = cmds.window(title="Mushroom Generator", menuBar = True, width=200)
+cmds.columnLayout("Block")
+cmds.intSliderGrp("num", label="Number of Mushrooms", field = True, min = 1, max = 10, v = 4)
+cmds.intSliderGrp("height", label="Mushroom Height", field = True, min = 1, max = 10, v = 4)
 
-#retopo top of mushroom to get rid of the triangles
-#delete faces
-faces = ['mushroom.f[99]', 'mushroom.f[101]', 'mushroom.f[102]', 'mushroom.f[117]', 'mushroom.f[118]', 'mushroom.f[126]', 'mushroom.f[128]', 'mushroom.f[129]', 'mushroom.f[386]', 'mushroom.f[389]', 'mushroom.f[387]', 'mushroom.f[390]', 'mushroom.f[406]', 'mushroom.f[405]', 'mushroom.f[414]', 'mushroom.f[417]', 'mushroom.f[416]', 'mushroom.f[475]', 'mushroom.f[476]', 'mushroom.f[478]', 'mushroom.f[478]', 'mushroom.f[479]', 'mushroom.f[478]', 'mushroom.f[494]', 'mushroom.f[495]', 'mushroom.f[503]', 'mushroom.f[505]', 'mushroom.f[506]', 'mushroom.f[9]', 'mushroom.f[10]', 'mushroom.f[12]', 'mushroom.f[13]', 'mushroom.f[28]',  'mushroom.f[29]', 'mushroom.f[37]', 'mushroom.f[39]', 'mushroom.f[40]', 'mushroom.f[98]']
-cmds.polyDelFacet(*faces)
-#create new faces
-cmds.polyBridgeEdge('mushroom.e[86]', 'mushroom.e[209]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[84]', 'mushroom.e[207]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[65]', 'mushroom.e[211]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[69]', 'mushroom.e[203]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[26]', 'mushroom.e[241]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[36]', 'mushroom.e[239]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[30]', 'mushroom.e[256]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[34]', 'mushroom.e[258]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[251]', 'mushroom.e[992]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[785]', 'mushroom.e[999]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[783]', 'mushroom.e[997]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[787]', 'mushroom.e[981]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[779]', 'mushroom.e[983]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[817]', 'mushroom.e[945]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[815]', 'mushroom.e[953]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[832]', 'mushroom.e[949]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[834]', 'mushroom.e[951]', dv = 0)
+#cmds.intSliderGrp("age", label="Mushroom Age", field = True, min = 1, max = 10, v = 2)
+cmds.button(label="Create Mushroom", c="createMushroom()")
+cmds.showWindow(window)
 
-#retopo bottom of mushroom to get rid of triangles
-#delete faces
-faces = ['mushroom.f[358]', 'mushroom.f[353]', 'mushroom.f[347]', 'mushroom.f[350]', 'mushroom.f[308]', 'mushroom.f[329]', 'mushroom.f[321]', 'mushroom.f[324]', 'mushroom.f[164]', 'mushroom.f[260]', 'mushroom.f[255]', 'mushroom.f[252]', 'mushroom.f[249]', 'mushroom.f[210]', 'mushroom.f[210]', 'mushroom.f[249]', 'mushroom.f[252]', 'mushroom.f[231]', 'mushroom.f[223]', 'mushroom.f[226]', 'mushroom.f[0]', 'mushroom.f[712]', 'mushroom.f[717]', 'mushroom.f[706]', 'mushroom.f[709]', 'mushroom.f[667]', 'mushroom.f[688]', 'mushroom.f[680]', 'mushroom.f[683]', 'mushroom.f[523]', 'mushroom.f[619]', 'mushroom.f[614]', 'mushroom.f[608]', 'mushroom.f[611]', 'mushroom.f[569]', 'mushroom.f[590]', 'mushroom.f[582]', 'mushroom.f[585]', 'mushroom.f[1]']
-cmds.polyDelFacet(*faces)
+def appendName(name, textstring):
+    textstring = name + textstring
+    return textstring
 
-#create faces
-cmds.polyBridgeEdge('mushroom.e[540]', 'mushroom.e[663]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[532]', 'mushroom.e[658]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[524]', 'mushroom.e[670]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[529]', 'mushroom.e[633]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[449]', 'mushroom.e[708]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[491]', 'mushroom.e[703]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[477]', 'mushroom.e[711]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[483]', 'mushroom.e[719]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[0]', 'mushroom.e[1]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[1176]', 'mushroom.e[1402]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[1171]', 'mushroom.e[1395]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[1183]', 'mushroom.e[1387]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[1146]', 'mushroom.e[1392]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[1221]', 'mushroom.e[1320]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[1216]', 'mushroom.e[1357]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[1224]', 'mushroom.e[1345]', dv = 0)
-cmds.polyBridgeEdge('mushroom.e[1232]', 'mushroom.e[1350]', dv = 0)
-
-#scale down top faces
-cmds.scaleComponents(0.8, 1, 0.8, 'mushroom.e[20]', 'mushroom.e[24]', 'mushroom.e[28]', 'mushroom.e[30]', 'mushroom.e[59]', 'mushroom.e[63]', 'mushroom.e[73]', 'mushroom.e[78]', 'mushroom.e[80]', 'mushroom.e[197]', 'mushroom.e[201]', 'mushroom.e[203]', 'mushroom.e[205]', 'mushroom.e[233]', 'mushroom.e[235]', 'mushroom.e[245]', 'mushroom.e[250]', 'mushroom.e[252]', 'mushroom.e[740]', 'mushroom.e[744]', 'mushroom.e[746]', 'mushroom.e[748]', 'mushroom.e[776]', 'mushroom.e[778]', 'mushroom.e[790]', 'mushroom.e[793]', 'mushroom.e[795]', 'mushroom.e[906]', 'mushroom.e[910]', 'mushroom.e[912]', 'mushroom.e[914]', 'mushroom.e[942]', 'mushroom.e[944]', 'mushroom.e[953]', 'mushroom.e[958]', 'mushroom.e[960]')
-
-#soften
-cmds.polySoftEdge(a = 180)
-
-#smooth
-#mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
+def createMushroom():
+    
+    num = cmds.intSliderGrp("num", q = True, v=True)
+    
+    for x in range(1, num+1):
+        #obj name
+        name = "mushrooms" + str(x)
+        print(name)
+        
+        height = cmds.intSliderGrp("height", q = True, v=True)
+        addheight = height
+        #depth = cmds.intSliderGrp("age", q = True, v=True)
+        #basic mushroom
+        outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight, 0), (0.034739, 4.932942+addheight, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646, 1.019012+addheight, 0), (9.66903, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
+        mushroom = cmds.revolve(outline, ch=1, po=1, rn=0, ssw=0, esw=360, ut=0, tol=0.01, degree=3, s=12, ulp=1, ax=(0, 1, 0), n=name)
+        mushroom = cmds.polyNormal(mushroom, normalMode=0, userNormalMode=1, ch=1, n=name)
+        cmds.delete(outline)
+        
+        #retopo top of mushroom to get rid of the triangles
+        #delete faces
+        facenums = ['.f[99]', '.f[101]', '.f[102]', '.f[117]', '.f[118]', '.f[126]', '.f[128]', '.f[129]', '.f[386]', '.f[389]', '.f[387]', '.f[390]', '.f[406]',
+         '.f[405]', '.f[414]', '.f[417]', '.f[416]', '.f[475]', '.f[476]', '.f[478]', '.f[478]', '.f[479]', '.f[478]', '.f[494]', '.f[495]', '.f[503]', '.f[505]',
+         '.f[506]', '.f[9]', '.f[10]', '.f[12]', '.f[13]', '.f[28]',  '.f[29]', '.f[37]', '.f[39]', '.f[40]', '.f[98]']
+        faces = []
+        for face in facenums:
+            faces.append(appendName(name, face))
+            
+        cmds.polyDelFacet(*faces)
+        #create new faces
+        edgenums = ['.e[86]', '.e[209]', '.e[84]', '.e[207]', '.e[65]', '.e[211]', '.e[69]', '.e[203]', '.e[26]', '.e[241]', '.e[36]', '.e[239]', '.e[30]', 
+        '.e[256]', '.e[34]', '.e[258]', '.e[251]', '.e[992]', '.e[785]', '.e[999]', '.e[783]', '.e[997]', '.e[787]', '.e[981]', '.e[779]', '.e[983]', '.e[817]',
+         '.e[945]', '.e[815]', '.e[953]', '.e[832]', '.e[949]', '.e[834]', '.e[951]']
+        edges = []
+        for edge in edgenums:
+            edges.append(appendName(name,edge))
+        
+        i = 0
+        while i < len(edges):     
+            cmds.polyBridgeEdge(edges[i], edges[i+1], dv = 0)
+            i = i + 2
+        
+        #retopo bottom of mushroom to get rid of triangles
+        #delete faces
+        facenums = ['.f[358]', '.f[353]', '.f[347]', '.f[350]', '.f[308]', '.f[329]', '.f[321]', '.f[324]', '.f[164]', '.f[260]', '.f[255]', '.f[252]', 
+        '.f[249]', '.f[210]', '.f[210]', '.f[249]', '.f[252]', '.f[231]', '.f[223]', '.f[226]', '.f[0]', '.f[712]', '.f[717]', '.f[706]', '.f[709]', 
+        '.f[667]', '.f[688]', '.f[680]', '.f[683]', '.f[523]', '.f[619]', '.f[614]', '.f[608]', '.f[611]', '.f[569]', '.f[590]', '.f[582]', '.f[585]', '.f[1]']
+        faces = []
+        for face in facenums:
+            faces.append(appendName(name, face))
+            
+        cmds.polyDelFacet(*faces)
+        
+        #create faces
+        edgenums = ['.e[540]', '.e[663]','.e[532]', '.e[658]', '.e[524]', '.e[670]', '.e[529]', '.e[633]', '.e[449]', '.e[708]', '.e[491]', '.e[703]', 
+        '.e[477]', '.e[711]', '.e[483]', '.e[719]', '.e[0]', '.e[1]', '.e[1176]', '.e[1402]', '.e[1171]', '.e[1395]', '.e[1183]', '.e[1387]', '.e[1146]', 
+        '.e[1392]', '.e[1221]', '.e[1320]', '.e[1216]', '.e[1357]', '.e[1224]', '.e[1345]', '.e[1232]', '.e[1350]']
+        edges = []
+        for edge in edgenums:
+            edges.append(appendName(name,edge))
+        
+        i = 0
+        while i < len(edges):     
+            cmds.polyBridgeEdge(edges[i], edges[i+1], dv = 0)
+            i = i + 2
+        
+        #scale down top faces
+        edgenums = ['.e[20]', '.e[24]', '.e[28]', '.e[30]', '.e[59]', '.e[63]', '.e[73]', '.e[78]', '.e[80]', '.e[197]', '.e[201]', '.e[203]', '.e[205]', '.e[233]', 
+        '.e[235]', '.e[245]', '.e[250]', '.e[252]', '.e[740]', '.e[744]', '.e[746]', '.e[748]', '.e[776]', '.e[778]', '.e[790]', '.e[793]', '.e[795]', '.e[906]', 
+        '.e[910]', '.e[912]', '.e[914]', '.e[942]', '.e[944]', '.e[953]', '.e[958]', '.e[960]']
+        edges = []
+        for edge in edgenums:
+            edges.append(appendName(name,edge))
+        
+        cmds.scaleComponents(0.8, 1, 0.8, edges)
+        
+        #soften
+        cmds.polySoftEdge(a = 180)
+        
+        #smooth
+        #mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
