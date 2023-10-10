@@ -1,10 +1,14 @@
 import maya.cmds as cmds
+#from numpy.random import seed
+#from numpy.random import normal
+import random
 
 #UI
 window = cmds.window(title="Mushroom Generator", menuBar = True, width=200)
 cmds.columnLayout("Block")
 cmds.intSliderGrp("num", label="Number of Mushrooms", field = True, min = 1, max = 10, v = 4)
-cmds.intSliderGrp("height", label="Mushroom Height", field = True, min = 1, max = 10, v = 4)
+cmds.intSliderGrp("height", label="Mushroom Average Height", field = True, min = 1, max = 15, v = 4)
+cmds.floatSliderGrp("std", label="Mushroom Height Standard Deviation", field = True, min = 0.5, max = 15, v = 4)
 
 #cmds.intSliderGrp("age", label="Mushroom Age", field = True, min = 1, max = 10, v = 2)
 cmds.button(label="Create Mushroom", c="createMushroom()")
@@ -14,17 +18,66 @@ def appendName(name, textstring):
     textstring = name + textstring
     return textstring
 
+def normalDistrib(mean, std, size):
+    heightlist = []
+    upperlim = mean + std
+    otherupperlim = mean - std
+    controlnum = int(size*0.341)
+    for i in range(controlnum):
+        heightlist.append(random.uniform(mean, upperlim))
+        heightlist.append(random.uniform(otherupperlim, mean))
+    lowerlim = upperlim
+    upperlim = upperlim + std
+    otherlowerlim = otherupperlim
+    otherupperlim = otherupperlim - std
+    controlnum = int(size*0.136)
+    for i in range(controlnum):
+        heightlist.append(random.uniform(lowerlim, upperlim))
+        heightlist.append(random.uniform(otherupperlim, otherlowerlim))
+    lowerlim = upperlim
+    upperlim = upperlim + std
+    otherlowerlim = otherupperlim
+    otherupperlim = otherupperlim - std
+    controlnum = int(size*0.021)
+    for i in range(controlnum):
+        heightlist.append(random.uniform(lowerlim, upperlim))
+        heightlist.append(random.uniform(otherupperlim, otherlowerlim))
+    
+    while (len(heightlist) < size):
+        if (len(heightlist) == (size - 1)):
+            sum = 0
+            for h in range(len(heightlist)):
+                sum = sum + heightlist[h]
+                #print(sum)
+            print(mean)
+            print(size)
+            print(sum)
+            print(len(heightlist))
+            
+            heightlist.append((mean * size) - sum)
+        else:
+            heightlist.append(mean)
+        
+    return heightlist
+    
+    
 def createMushroom():
     
     num = cmds.intSliderGrp("num", q = True, v=True)
+    height = cmds.intSliderGrp("height", q = True, v=True)
+    std = cmds.floatSliderGrp("std", q = True, v=True)
     
+    #random
+    heightlist = normalDistrib(height, std, num)  
     for x in range(1, num+1):
         #obj name
         name = "mushrooms" + str(x)
         print(name)
         
-        height = cmds.intSliderGrp("height", q = True, v=True)
-        addheight = height
+        addheight = heightlist[x - 1]
+        print(addheight)
+        #addheight = height
+        #sddheight = data[x - 1]
         #depth = cmds.intSliderGrp("age", q = True, v=True)
         #basic mushroom
         outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight, 0), (0.034739, 4.932942+addheight, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646, 1.019012+addheight, 0), (9.66903, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
