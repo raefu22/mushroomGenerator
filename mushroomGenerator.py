@@ -1,16 +1,12 @@
 import maya.cmds as cmds
-#from numpy.random import seed
-#from numpy.random import normal
 import random
 
 #UI
 window = cmds.window(title="Mushroom Generator", menuBar = True, width=200)
 cmds.columnLayout("Block")
-cmds.intSliderGrp("num", label="Number of Mushrooms", field = True, min = 1, max = 10, v = 4)
+cmds.intSliderGrp("num", label="Number of Mushrooms", field = True, min = 1, max = 20, v = 4)
 cmds.intSliderGrp("height", label="Mushroom Average Height", field = True, min = 1, max = 15, v = 4)
-cmds.floatSliderGrp("std", label="Mushroom Height Standard Deviation", field = True, min = 0.5, max = 15, v = 4)
-
-#cmds.intSliderGrp("age", label="Mushroom Age", field = True, min = 1, max = 10, v = 2)
+cmds.floatSliderGrp("std", label="Mushroom Height Standard Deviation", field = True, min = 0.5, max = 15, v = 1)
 cmds.button(label="Create Mushroom", c="createMushroom()")
 cmds.showWindow(window)
 
@@ -30,6 +26,9 @@ def normalDistrib(mean, std, size):
     upperlim = upperlim + std
     otherlowerlim = otherupperlim
     otherupperlim = otherupperlim - std
+    if (otherupperlim < 0):
+        otherupperlim = 0
+    
     controlnum = int(size*0.136)
     for i in range(controlnum):
         heightlist.append(random.uniform(lowerlim, upperlim))
@@ -38,6 +37,9 @@ def normalDistrib(mean, std, size):
     upperlim = upperlim + std
     otherlowerlim = otherupperlim
     otherupperlim = otherupperlim - std
+    if (otherupperlim < 0):
+        otherupperlim = 0
+    
     controlnum = int(size*0.021)
     for i in range(controlnum):
         heightlist.append(random.uniform(lowerlim, upperlim))
@@ -48,18 +50,20 @@ def normalDistrib(mean, std, size):
             sum = 0
             for h in range(len(heightlist)):
                 sum = sum + heightlist[h]
-                #print(sum)
-            print(mean)
-            print(size)
-            print(sum)
-            print(len(heightlist))
-            
             heightlist.append((mean * size) - sum)
         else:
-            heightlist.append(mean)
+            upperlim = upperlim + std
+            heightlist.append(random.uniform(mean, upperlim))
+            
+          
         
     return heightlist
     
+def randomLocation():
+    coordinates = []
+    for i in range(2):
+        coordinates.append(random.uniform(-10, 25))
+    return coordinates
     
 def createMushroom():
     
@@ -71,17 +75,16 @@ def createMushroom():
     heightlist = normalDistrib(height, std, num)  
     for x in range(1, num+1):
         #obj name
-        name = "mushrooms" + str(x)
-        print(name)
-        
+        name = "mushroom" + str(x)
+
         addheight = heightlist[x - 1]
-        print(addheight)
-        #addheight = height
-        #sddheight = data[x - 1]
-        #depth = cmds.intSliderGrp("age", q = True, v=True)
+
         #basic mushroom
         outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight, 0), (0.034739, 4.932942+addheight, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646, 1.019012+addheight, 0), (9.66903, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
         mushroom = cmds.revolve(outline, ch=1, po=1, rn=0, ssw=0, esw=360, ut=0, tol=0.01, degree=3, s=12, ulp=1, ax=(0, 1, 0), n=name)
+        
+        
+        
         mushroom = cmds.polyNormal(mushroom, normalMode=0, userNormalMode=1, ch=1, n=name)
         cmds.delete(outline)
         
@@ -146,4 +149,11 @@ def createMushroom():
         cmds.polySoftEdge(a = 180)
         
         #smooth
-        #mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
+        mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
+        
+        cmds.select(name)
+        #move
+        coordinates = randomLocation()
+        
+        cmds.move(coordinates[0], moveX = True)
+        cmds.move(coordinates[1], moveZ = True)
