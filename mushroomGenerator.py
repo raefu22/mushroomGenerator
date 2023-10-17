@@ -83,8 +83,6 @@ def createMushroom():
         outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight, 0), (0.034739, 4.932942+addheight, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646, 1.019012+addheight, 0), (9.66903, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
         mushroom = cmds.revolve(outline, ch=1, po=1, rn=0, ssw=0, esw=360, ut=0, tol=0.01, degree=3, s=12, ulp=1, ax=(0, 1, 0), n=name)
         
-        
-        
         mushroom = cmds.polyNormal(mushroom, normalMode=0, userNormalMode=1, ch=1, n=name)
         cmds.delete(outline)
         
@@ -148,12 +146,29 @@ def createMushroom():
         #soften
         cmds.polySoftEdge(a = 180)
         
+        #bend
+        bendDeformer = cmds.nonLinear(type = 'bend', curvature=55)
+        cmds.select(bendDeformer[1])
+        lowbound = bendDeformer[0] + '.lowBound'
+        cmds.setAttr(lowbound, -3.66)
+     
+        highbound = bendDeformer[0] + '.highBound'
+        cmds.setAttr(highbound, 0)
+     
+        #clear history
+        cmds.select(name)
+        cmds.delete(name, constructionHistory = True)
+     
+        #rotate
+        cmds.select(name)
+        cmds.rotate(0, 0, '-45deg', r=True)
+     
         #smooth
+        cmds.select(name)
         mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
         
-        cmds.select(name)
         #move
         coordinates = randomLocation()
         
-        cmds.move(coordinates[0], moveX = True)
-        cmds.move(coordinates[1], moveZ = True)
+        cmds.move(coordinates[0], relative = True, moveX = True)
+        cmds.move(coordinates[1], relative = True, moveZ = True)
