@@ -156,7 +156,7 @@ def createMushroom():
         
         #randomize shape
         vertnums = ['.vtx[481]', '.vtx[17]', '.vtx[18]', '.vtx[19]', '.vtx[24]', '.vtx[25]', '.vtx[34]', '.vtx[35]', '.vtx[46]', '.vtx[48]', '.vtx[49]', '.vtx[112]', '.vtx[113]', '.vtx[117]',
-        '.vtx[118]', '.vtx[127]', '.vtx[128]', '.vtx[139]', '.vtx[141]', '.vtx[142]', '.vtx[392]', '.vtx[393]', '.vtx[397]', '.vtx[398]', '.vtx[407]', '.vtx[408]', '.vtx[419]', '.vtx[421]'
+        '.vtx[118]', '.vtx[127]', '.vtx[128]', '.vtx[139]', '.vtx[141]', '.vtx[142]', '.vtx[392]', '.vtx[393]', '.vtx[397]', '.vtx[398]', '.vtx[407]', '.vtx[408]', '.vtx[419]', '.vtx[421]',
         '.vtx[422]', '.vtx[480]', '.vtx[481]', '.vtx[485]', '.vtx[486]', '.vtx[495]', '.vtx[496]', '.vtx[505]', '.vtx[507]', '.vtx[425]', '.vtx[483]', '.vtx[21]', '.vtx[22]', '.vtx[23]', 
         '.vtx[27]', '.vtx[28]', '.vtx[37]', '.vtx[38]', '.vtx[47]', '.vtx[51]', '.vtx[52]', '.vtx[115]', '.vtx[116]', '.vtx[120]', '.vtx[121]', '.vtx[130]', '.vtx[131]', '.vtx[140]', '.vtx[144]',
         '.vtx[145]', '.vtx[395]', '.vtx[396]', '.vtx[400]', '.vtx[401]', '.vtx[410]', '.vtx[411]', '.vtx[420]', '.vtx[424]', '.vtx[425]', '.vtx[483]', '.vtx[484]', '.vtx[488]', '.vtx[489]', 
@@ -172,9 +172,10 @@ def createMushroom():
         
         for j in range(5):
             point = verts[random.randint(0, len(verts) - 1)]
-            value = random.uniform(0, 5)
-            #cmds.softSelect(point, ssd = 2, ssf = 1)
+            value = random.uniform(0, 3)
             cmds.select(point)
+            cmds.softSelect(point, ssd = 3, ssf = 1)
+            
             cmds.move(value, relative = True, moveX = True)
             value = random.uniform(0, 0.5)
             cmds.move(value, relative = True, moveZ = True)
