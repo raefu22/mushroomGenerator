@@ -154,8 +154,33 @@ def createMushroom():
         #soften
         cmds.polySoftEdge(a = 180)
         
-        #bend
+        #randomize shape
+        vertnums = ['.vtx[481]', '.vtx[17]', '.vtx[18]', '.vtx[19]', '.vtx[24]', '.vtx[25]', '.vtx[34]', '.vtx[35]', '.vtx[46]', '.vtx[48]', '.vtx[49]', '.vtx[112]', '.vtx[113]', '.vtx[117]',
+        '.vtx[118]', '.vtx[127]', '.vtx[128]', '.vtx[139]', '.vtx[141]', '.vtx[142]', '.vtx[392]', '.vtx[393]', '.vtx[397]', '.vtx[398]', '.vtx[407]', '.vtx[408]', '.vtx[419]', '.vtx[421]'
+        '.vtx[422]', '.vtx[480]', '.vtx[481]', '.vtx[485]', '.vtx[486]', '.vtx[495]', '.vtx[496]', '.vtx[505]', '.vtx[507]', '.vtx[425]', '.vtx[483]', '.vtx[21]', '.vtx[22]', '.vtx[23]', 
+        '.vtx[27]', '.vtx[28]', '.vtx[37]', '.vtx[38]', '.vtx[47]', '.vtx[51]', '.vtx[52]', '.vtx[115]', '.vtx[116]', '.vtx[120]', '.vtx[121]', '.vtx[130]', '.vtx[131]', '.vtx[140]', '.vtx[144]',
+        '.vtx[145]', '.vtx[395]', '.vtx[396]', '.vtx[400]', '.vtx[401]', '.vtx[410]', '.vtx[411]', '.vtx[420]', '.vtx[424]', '.vtx[425]', '.vtx[483]', '.vtx[484]', '.vtx[488]', '.vtx[489]', 
+        '.vtx[498]', '.vtx[499]', '.vtx[506]', '.vtx[509]', '.vtx[472]', '.vtx[476]', '.vtx[6]', '.vtx[7]', '.vtx[8]', '.vtx[9]', '.vtx[13]', '.vtx[30]', '.vtx[31]', '.vtx[39]', '.vtx[40]',
+        '.vtx[42]', '.vtx[103]', '.vtx[104]', '.vtx[105]', '.vtx[108]', '.vtx[123]', '.vtx[124]', '.vtx[132]', '.vtx[133]', '.vtx[135]', '.vtx[383]', '.vtx[384]', '.vtx[385]', '.vtx[388]', 
+        '.vtx[403]', '.vtx[404]', '.vtx[412]', '.vtx[413]', '.vtx[415]', '.vtx[471]', '.vtx[474]', '.vtx[473]', '.vtx[476]', '.vtx[491]', '.vtx[492]', '.vtx[500]', '.vtx[502]', '.vtx[482]',
+        '.vtx[381]', '.vtx[3]', '.vtx[4]', '.vtx[5]', '.vtx[16]', '.vtx[20]', '.vtx[26]', '.vtx[29]', '.vtx[36]', '.vtx[45]', '.vtx[50]', '.vtx[101]', '.vtx[102]', '.vtx[111]', '.vtx[114]', 
+        '.vtx[119]', '.vtx[122]', '.vtx[129]', '.vtx[138]', '.vtx[143]', '.vtx[381]', '.vtx[382]', '.vtx[391]', '.vtx[394]', '.vtx[399]', '.vtx[402]', '.vtx[409]', '.vtx[418]', '.vtx[423]', 
+        '.vtx[470]', '.vtx[479]', '.vtx[482]', '.vtx[487]', '.vtx[490]', '.vtx[497]', '.vtx[504]', '.vtx[508]']
+        verts = []
+        for vert in vertnums:
+            verts.append(appendName(name,vert))
         
+        for j in range(5):
+            point = verts[random.randint(0, len(verts) - 1)]
+            value = random.uniform(0, 5)
+            #cmds.softSelect(point, ssd = 2, ssf = 1)
+            cmds.select(point)
+            cmds.move(value, relative = True, moveX = True)
+            value = random.uniform(0, 0.5)
+            cmds.move(value, relative = True, moveZ = True)
+
+        #bend
+        cmds.select(name)
         bendDeformer = cmds.nonLinear(type = 'bend', curvature=bendlist[x-1])
         cmds.select(bendDeformer[1])
         lowbound = bendDeformer[0] + '.lowBound'
@@ -163,7 +188,6 @@ def createMushroom():
      
         highbound = bendDeformer[0] + '.highBound'
         cmds.setAttr(highbound, 0)
-        
         
      
         #clear history
