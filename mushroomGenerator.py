@@ -5,8 +5,11 @@ import random
 window = cmds.window(title="Mushroom Generator", menuBar = True, width=200)
 cmds.columnLayout("Block")
 cmds.intSliderGrp("num", label="Number of Mushrooms", field = True, min = 1, max = 20, v = 4)
-cmds.intSliderGrp("height", label="Mushroom Average Height", field = True, min = 1, max = 15, v = 4)
-cmds.floatSliderGrp("std", label="Mushroom Height Standard Deviation", field = True, min = 0.5, max = 15, v = 1)
+cmds.intSliderGrp("height", label="Average Height", field = True, min = 1, max = 15, v = 4)
+cmds.floatSliderGrp("heightstd", label="Height Standard Deviation", field = True, min = 0.5, max = 8, v = 1)
+cmds.intSliderGrp("bend", label="Average Bend", field = True, min = 0, max = 10, v = 2)
+cmds.floatSliderGrp("bendstd", label="Bend Standard Deviation", field = True, min = 0.1, max = 10, v = 0.5)
+
 cmds.button(label="Create Mushroom", c="createMushroom()")
 cmds.showWindow(window)
 
@@ -55,8 +58,6 @@ def normalDistrib(mean, std, size):
             upperlim = upperlim + std
             heightlist.append(random.uniform(mean, upperlim))
             
-          
-        
     return heightlist
     
 def randomLocation():
@@ -69,10 +70,17 @@ def createMushroom():
     
     num = cmds.intSliderGrp("num", q = True, v=True)
     height = cmds.intSliderGrp("height", q = True, v=True)
-    std = cmds.floatSliderGrp("std", q = True, v=True)
+    heightstd = cmds.floatSliderGrp("heightstd", q = True, v=True)
+    
+    bend = cmds.intSliderGrp("bend", q = True, v=True)
+    bendstd = cmds.floatSliderGrp("bendstd", q = True, v=True)
+    bend = bend * 10
+    bendstd = bendstd*10
     
     #random
-    heightlist = normalDistrib(height, std, num)  
+    heightlist = normalDistrib(height, heightstd, num)  
+    bendlist = normalDistrib(bend, bendstd, num)  
+    
     for x in range(1, num+1):
         #obj name
         name = "mushroom" + str(x)
@@ -147,13 +155,16 @@ def createMushroom():
         cmds.polySoftEdge(a = 180)
         
         #bend
-        bendDeformer = cmds.nonLinear(type = 'bend', curvature=55)
+        
+        bendDeformer = cmds.nonLinear(type = 'bend', curvature=bendlist[x-1])
         cmds.select(bendDeformer[1])
         lowbound = bendDeformer[0] + '.lowBound'
         cmds.setAttr(lowbound, -3.66)
      
         highbound = bendDeformer[0] + '.highBound'
         cmds.setAttr(highbound, 0)
+        
+        
      
         #clear history
         cmds.select(name)
@@ -161,7 +172,16 @@ def createMushroom():
      
         #rotate
         cmds.select(name)
-        cmds.rotate(0, 0, '-45deg', r=True)
+        val = bendlist[x-1] * 1.2
+        if val < 0:
+            val = 0
+        degrees = '-' + str(val) + 'deg'
+        cmds.rotate(0, 0, degrees, r=True)
+        
+        cmds.makeIdentity(apply=True, t=1, r=1, s=1, n=0, pn=1)
+        deg = random.uniform(0, 360)
+        cmds.rotate(0, deg,0, r=True)
+     
      
         #smooth
         cmds.select(name)
