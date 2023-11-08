@@ -71,6 +71,14 @@ def randomLocation():
         coordinates.append(random.uniform(-40, 45))
     return coordinates
     
+    
+def clusterLocation(size):
+    singleCoordinates = normalDistrib(25, 5, size)
+    for i in range(len(singleCoordinates)):
+        singleCoordinates[i] = singleCoordinates[i] - 25
+    random.shuffle(singleCoordinates)
+    return singleCoordinates
+    
 def createMushroom():
     
     num = cmds.intSliderGrp("num", q = True, v=True)
@@ -88,25 +96,27 @@ def createMushroom():
     heightlist = normalDistrib(height, heightstd, num)  
     bendlist = normalDistrib(bend, bendstd, num)  
     
+    
+    xCoordinates = clusterLocation(num)
+    zCoordinates = clusterLocation(num)
+    
     for x in range(1, num+1):
         #obj name
         name = "mushroom" + str(x)
 
         addheight = heightlist[x - 1]
         
-        #mushroom cap shape: height
-        capheight = random.uniform(0, 15)
-        print(capheight)
+      
         
         #basic mushroom
-        outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight + capheight, 0), (0.034739, 4.932942+addheight + capheight/2, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646, 1.019012+addheight, 0), (9.66903, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
+        outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight, 0), (0.034739, 4.932942+addheight, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646, 1.019012+addheight, 0), (9.66903, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
         
         #adjust curve shape by moving handle
         cmds.select("bezier1.cv[1]")
         
         #cmds.move(5.381509, 2, 0, r = True)    tested works for capheight of 5
        
-        cmds.move(1.0763018*capheight, 0.4 * capheight, 0, r = True)
+        #cmds.move(1.0763018*capheight, 0.4 * capheight, 0, r = True)
         
         
         mushroom = cmds.revolve(outline, ch=1, po=1, rn=0, ssw=0, esw=360, ut=0, tol=0.01, degree=3, s=12, ulp=1, ax=(0, 1, 0), n=name)
@@ -168,10 +178,9 @@ def createMushroom():
         edges = []
         for edge in edgenums:
             edges.append(appendName(name,edge))
-        if capheight < 5:
-            cmds.scaleComponents(0.03, 1 - (0.03 * capheight) , 0.03, edges)
-        else:
-            cmds.scaleComponents(0.03, 1, 0.03, edges)
+        
+        cmds.scaleComponents(0.03, 1, 0.03, edges)
+       
         #soften
         cmds.polySoftEdge(a = 180)
         
@@ -187,9 +196,7 @@ def createMushroom():
         '.vtx[119]', '.vtx[122]', '.vtx[129]', '.vtx[138]', '.vtx[143]', '.vtx[381]', '.vtx[382]', '.vtx[391]', '.vtx[394]', '.vtx[399]', '.vtx[402]', '.vtx[409]', '.vtx[418]', '.vtx[423]', 
         '.vtx[470]', '.vtx[479]', '.vtx[482]', '.vtx[487]', '.vtx[490]', '.vtx[497]', '.vtx[504]', '.vtx[508]']
         
-        #'.vtx[6]', '.vtx[7]', '.vtx[8]', '.vtx[9]', '.vtx[13]', '.vtx[30]', '.vtx[31]', '.vtx[39]', '.vtx[40]',
-        #'.vtx[42]', '.vtx[103]', '.vtx[104]', '.vtx[105]', '.vtx[108]', '.vtx[123]', '.vtx[124]', '.vtx[132]', '.vtx[133]', '.vtx[135]', '.vtx[383]', '.vtx[384]', '.vtx[385]', '.vtx[388]', 
-        #'.vtx[403]', '.vtx[404]', '.vtx[412]', '.vtx[413]', '.vtx[415]', '.vtx[471]', '.vtx[474]', '.vtx[473]', '.vtx[476]', '.vtx[491]', '.vtx[492]', '.vtx[500]', '.vtx[502]',
+        
         
         #delete `polyMoveVertex -ch 1 |mushroom1|mushroom1Shape.vtx[0]`; polySplit -ch 1 -sma 180 -ief 1 -aef 1 -ep 19 0.494605 -ep 21 0.505395 -ep 23 0.494605 -ep 25 0.505395 -ep 26 0.505395 -ep 954 0.505395 -ep 957 0.494605 -ep 941 0.494605 -ep 939 0.505395 -ep 905 0.494605 -ep 903 0.505395 -ep 909 0.494605 -ep 907 0.505395 -ep 789 0.494605 -ep 787 0.505395 -ep 792 0.494605 -ep 775 0.494605 -ep 773 0.505395 -ep 739 0.494605 -ep 737 0.505395 -ep 743 0.494605 -ep 741 0.505395 -ep 244 0.494605 -ep 246 0.505395 -ep 249 0.494605 -ep 232 0.494605 -ep 230 0.505395 -ep 196 0.494605 -ep 194 0.505395 -ep 200 0.494605 -ep 198 0.505395 -ep 72 0.494605 -ep 74 0.505395 -ep 77 0.494605 -ep 58 0.494605 -ep 60 0.505395 -ep 19 0.494605 |mushroom1|mushroom1Shape;  select -cl;
         #delete `polyMoveVertex -ch=1 |mushroom1|mushroom1Shape.vtx[0]`; polySplit -ch 1 -sma 180 -ief 1 -aef 1 -ep 19 0.494605 -ep 21 0.505395 -ep 23 0.494605 -ep 25 0.505395 -ep 26 0.505395 -ep 954 0.505395 -ep 957 0.494605 -ep 941 0.494605 -ep 939 0.505395 -ep 905 0.494605 -ep 903 0.505395 -ep 909 0.494605 -ep 907 0.505395 -ep 789 0.494605 -ep 787 0.505395 -ep 792 0.494605 -ep 775 0.494605 -ep 773 0.505395 -ep 739 0.494605 -ep 737 0.505395 -ep 743 0.494605 -ep 741 0.505395 -ep 244 0.494605 -ep 246 0.505395 -ep 249 0.494605 -ep 232 0.494605 -ep 230 0.505395 -ep 196 0.494605 -ep 194 0.505395 -ep 200 0.494605 -ep 198 0.505395 -ep 72 0.494605 -ep 74 0.505395 -ep 77 0.494605 -ep 58 0.494605 -ep 60 0.505395 -ep 19 0.494605 |mushroom1|mushroom1Shape;  select -cl;
@@ -237,7 +244,7 @@ def createMushroom():
             point = verts[random.randint(0, len(verts) - 1)]
             value = random.uniform(0, 6)
             cmds.select(point)
-            cmds.softSelect(point, ssd = 3, ssf = 1)
+            #cmds.softSelect(point, ssd = 3, ssf = 1)
             
             #cmds.move(value, relative = True, moveX = True)
             value = random.uniform(0, 1)
@@ -282,7 +289,9 @@ def createMushroom():
         
         
         #move
-        coordinates = randomLocation()
+        #coordinates = randomLocation()
         
-        cmds.move(coordinates[0], relative = True, moveX = True)
-        cmds.move(coordinates[1], relative = True, moveZ = True)
+        print(xCoordinates[x-1])
+        print(zCoordinates[x-1])
+        cmds.move(xCoordinates[x-1], 0, zCoordinates[x-1], relative = True)
+        #cmds.move(0, 0, , relative = True, z = True)
