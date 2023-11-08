@@ -4,6 +4,10 @@ import random
 #UI
 window = cmds.window(title="Mushroom Generator", menuBar = True, width=200)
 cmds.columnLayout("Block")
+
+
+nameparam = cmds.textFieldGrp(label = 'Name')
+
 cmds.intSliderGrp("num", label="Number of Mushrooms", field = True, min = 1, max = 20, v = 4)
 cmds.intSliderGrp("height", label="Average Height", field = True, min = 1, max = 15, v = 4)
 cmds.floatSliderGrp("heightstd", label="Height Standard Deviation", field = True, min = 0.5, max = 8, v = 1)
@@ -80,7 +84,8 @@ def clusterLocation(size):
     return singleCoordinates
     
 def createMushroom():
-    
+    inputname = cmds.textFieldGrp(nameparam, query = True, text = True)
+   
     num = cmds.intSliderGrp("num", q = True, v=True)
     height = cmds.intSliderGrp("height", q = True, v=True)
     heightstd = cmds.floatSliderGrp("heightstd", q = True, v=True)
@@ -102,7 +107,7 @@ def createMushroom():
     
     for x in range(1, num+1):
         #obj name
-        name = "mushroom" + str(x)
+        name = inputname + str(x)
 
         addheight = heightlist[x - 1]
         
