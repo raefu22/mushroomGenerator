@@ -1,6 +1,14 @@
 import maya.cmds as cmds
 import random
 
+def showParameter(*args):
+    showCheckbox = cmds.checkBoxGrp(smooth, q = True)
+    cmds.checkBoxGrp(layers, edit=True, enable=True)
+   
+def hideParameter(*args):
+    showCheckbox = cmds.checkBoxGrp(smooth, q = True, vis = False, v1 = False)
+    cmds.checkBoxGrp(layers, edit=True, enable=False)
+   
 #UI
 window = cmds.window(title="Mushroom Generator", menuBar = True, width=200)
 cmds.columnLayout("Block")
@@ -14,7 +22,12 @@ cmds.floatSliderGrp("heightstd", label="Height Standard Deviation", field = True
 cmds.intSliderGrp("bend", label="Average Bend", field = True, min = 0, max = 10, v = 2)
 cmds.floatSliderGrp("bendstd", label="Bend Standard Deviation", field = True, min = 0.1, max = 10, v = 0.5)
 
-cmds.checkBoxGrp("smooth", numberOfCheckBoxes=1, label='Smooth ', v1=False)
+smooth = cmds.checkBoxGrp("smooth", numberOfCheckBoxes=1, label='Smooth ', v1=False, onc = showParameter, ofc = hideParameter)
+
+layers = cmds.checkBoxGrp("layers", numberOfCheckBoxes=1, label='    Save a LP Copy ', v1=False)
+cmds.checkBoxGrp(layers, edit=True, enable=False)
+
+#NEEDS TO IMPLEMENTED: set layer visiblity HP T, LP F, and make it check for layer with the same name, only create layer if it does not exist
 
 #    if mushroom cap is pointy, it gives off a fantastical vibe
 #    NEEDS TO GET DONE: separate out when capheight > 0 adjust the curve for a smooth round cap
@@ -83,6 +96,20 @@ def clusterLocation(size):
     random.shuffle(singleCoordinates)
     return singleCoordinates
     
+def setDisplayLayerVis(name, visible):
+    '''Toggle display layer visibility
+
+    Args:
+        name (str): Display layer name
+        on (bool): True to enable layer, False to disable
+    '''
+    
+    cmds.setAttr('{}.visibility'.format(name), visible)
+    cmds.layerButton(name, edit=True, lv=visible)
+    
+
+
+    
 def createMushroom():
     inputname = cmds.textFieldGrp(nameparam, query = True, text = True)
    
@@ -96,7 +123,8 @@ def createMushroom():
     bendstd = bendstd*10
     
     smooth = cmds.checkBoxGrp("smooth", q = True, v1=True)
-    
+   
+    layers = cmds.checkBoxGrp("layers", q = True, v1=True)
     #random
     heightlist = normalDistrib(height, heightstd, num)  
     bendlist = normalDistrib(bend, bendstd, num)  
@@ -104,6 +132,11 @@ def createMushroom():
     
     xCoordinates = clusterLocation(num)
     zCoordinates = clusterLocation(num)
+    
+    #display layers
+    if (smooth == True and layers == True):
+        layer1 = cmds.createDisplayLayer(n="LowPoly")
+        layer2 = cmds.createDisplayLayer(n="HighPoly")
     
     for x in range(1, num+1):
         #obj name
@@ -114,15 +147,25 @@ def createMushroom():
       
         
         #basic mushroom
-        outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight, 0), (0.034739, 4.932942+addheight, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646, 1.019012+addheight, 0), (9.66903, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
+        if x == 1:
+            outline = cmds.curve(bezier=True, d=3, p=[(0.0569524, 4.935496+addheight, 0), (0.0569524, 4.935496+addheight, 0), (2.924011, 5.060151+addheight, 0), (4.139394, 4.71735+addheight, 0),(5.354778, 4.37455+addheight, 0), (6.383179, 4.156404+addheight, 0), (6.819471, 3.128003+addheight, 0), (7.255762, 2.099601+addheight, 0), (7.723217, 3.793489-4+addheight, 0), (6.13387, 2.983233-4+addheight, 0), (4.544522, 2.172978-4+addheight, 0), 
+              (2.550047, 3.076724-4+addheight, 0), (2.612374, 2.422287-4+addheight, 0), (2.674701,  1.76785-4+addheight, 0), (2.425392, -4.379682+addheight, 0), (2.83052, -7.748121+addheight, 0),
+               (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7])         
+        elif x==2:
+            outline = cmds.curve(bezier=True, d=3, p=[(0.0105626, 0.878479+addheight, 0), (0.0105626, 0.878479+addheight, 0), (4.283515, 0.684254+addheight, 0), (5.545978, 1.145538+addheight, 0), (6.808441, 1.606823+addheight, 0), (7.949513, 2.189498+addheight, 0), (7.925235, 1.461154+addheight, 0), (7.900957, 0.73281+addheight, 0), 
+            (7.026944,2.887672-4+addheight, 0), (4.720521, 2.863393-4+addheight, 0),(2.414098, 2.839115-4+addheight, 0), (2.923939, 3.179009-4+addheight, 0), (2.486933, 1.843712-4+addheight, 0), (2.049926, 0.508414-4+addheight, 0), (2.584045, 0.508414-4+addheight, 0), (2.851105, -4.802605+addheight, 0), 
+             (3.118164, -6.113625, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
+              # 0 -p 3.652283 -6.920695 0 -p 2.996773 -7.284868 0 -p 2.341264 -7.64904 0 -p 0.0105626 -7.818987 0 -p 0.0105626 -7.818987 0 -k 0 -k 0 -k 0 -k 1 -k 1 -k 1 -k 2 -k 2 -k 2 -k 3 -k 3 -k 3 -k 4 -k 4 -k 4 -k 5 -k 5 -k 5 -k 6 -k 6 -k 6 -k 7 -k 7 -k 7 ;
+
+        else:
+            outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight, 0), (0.034739, 4.932942+addheight, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646, 1.019012+addheight, 0), (9.66903, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
+        
+        
         
         #adjust curve shape by moving handle
         cmds.select("bezier1.cv[1]")
         
-        #cmds.move(5.381509, 2, 0, r = True)    tested works for capheight of 5
-       
-        #cmds.move(1.0763018*capheight, 0.4 * capheight, 0, r = True)
-        
+           
         
         mushroom = cmds.revolve(outline, ch=1, po=1, rn=0, ssw=0, esw=360, ut=0, tol=0.01, degree=3, s=12, ulp=1, ax=(0, 1, 0), n=name)
         #fix normals
@@ -201,46 +244,7 @@ def createMushroom():
         '.vtx[119]', '.vtx[122]', '.vtx[129]', '.vtx[138]', '.vtx[143]', '.vtx[381]', '.vtx[382]', '.vtx[391]', '.vtx[394]', '.vtx[399]', '.vtx[402]', '.vtx[409]', '.vtx[418]', '.vtx[423]', 
         '.vtx[470]', '.vtx[479]', '.vtx[482]', '.vtx[487]', '.vtx[490]', '.vtx[497]', '.vtx[504]', '.vtx[508]']
         
-        
-        
-        #delete `polyMoveVertex -ch 1 |mushroom1|mushroom1Shape.vtx[0]`; polySplit -ch 1 -sma 180 -ief 1 -aef 1 -ep 19 0.494605 -ep 21 0.505395 -ep 23 0.494605 -ep 25 0.505395 -ep 26 0.505395 -ep 954 0.505395 -ep 957 0.494605 -ep 941 0.494605 -ep 939 0.505395 -ep 905 0.494605 -ep 903 0.505395 -ep 909 0.494605 -ep 907 0.505395 -ep 789 0.494605 -ep 787 0.505395 -ep 792 0.494605 -ep 775 0.494605 -ep 773 0.505395 -ep 739 0.494605 -ep 737 0.505395 -ep 743 0.494605 -ep 741 0.505395 -ep 244 0.494605 -ep 246 0.505395 -ep 249 0.494605 -ep 232 0.494605 -ep 230 0.505395 -ep 196 0.494605 -ep 194 0.505395 -ep 200 0.494605 -ep 198 0.505395 -ep 72 0.494605 -ep 74 0.505395 -ep 77 0.494605 -ep 58 0.494605 -ep 60 0.505395 -ep 19 0.494605 |mushroom1|mushroom1Shape;  select -cl;
-        #delete `polyMoveVertex -ch=1 |mushroom1|mushroom1Shape.vtx[0]`; polySplit -ch 1 -sma 180 -ief 1 -aef 1 -ep 19 0.494605 -ep 21 0.505395 -ep 23 0.494605 -ep 25 0.505395 -ep 26 0.505395 -ep 954 0.505395 -ep 957 0.494605 -ep 941 0.494605 -ep 939 0.505395 -ep 905 0.494605 -ep 903 0.505395 -ep 909 0.494605 -ep 907 0.505395 -ep 789 0.494605 -ep 787 0.505395 -ep 792 0.494605 -ep 775 0.494605 -ep 773 0.505395 -ep 739 0.494605 -ep 737 0.505395 -ep 743 0.494605 -ep 741 0.505395 -ep 244 0.494605 -ep 246 0.505395 -ep 249 0.494605 -ep 232 0.494605 -ep 230 0.505395 -ep 196 0.494605 -ep 194 0.505395 -ep 200 0.494605 -ep 198 0.505395 -ep 72 0.494605 -ep 74 0.505395 -ep 77 0.494605 -ep 58 0.494605 -ep 60 0.505395 -ep 19 0.494605 |mushroom1|mushroom1Shape;  select -cl;
-        #multicut ^
-        #delete `polyMoveVertex -ch 1 |mushroom1|mushroom1Shape.vtx[0]`; polySplit -ch 1 -sma 180 -ep 19 0.516892 -ep 60 0.483108 -ep 58 0.516892 -ep 77 0.516892 -ep 74 0.483108 -ep 72 0.516892 -ep 198 0.483108 -ep 200 0.516892 -ep 194 0.483108 -ep 196 0.516892 -ep 230 0.483108 -ep 232 0.516892 -ep 249 0.516892 -ep 246 0.483108 -ep 244 0.516892 -ep 741 0.483108 -ep 743 0.516892 -ep 737 0.483108 -ep 739 0.516892 -ep 773 0.483108 -ep 775 0.516892 -ep 792 0.516892 -ep 787 0.483108 -ep 789 0.516892 -ep 907 0.483108 -ep 909 0.516892 -ep 903 0.483108 -ep 905 0.516892 -ep 939 0.483108 -ep 941 0.516892 -ep 957 0.516892 -ep 954 0.483108 -ep 26 0.483108 -ep 25 0.483108 -ep 23 0.516892 -ep 21 0.483108 -ep 19 0.516892 |mushroom1|mushroom1Shape;  select -cl;
-        """
-        delete 
-        `polyMoveVertex -ch 1 |mushroom1|mushroom1Shape.vtx[0]`; 
-        """
-        #cmds.select(name)
-        #cmds.polySplit(ip=[19, 0.516892])
-        
-        """
-        , ep=[60, 0.483108], ep=[58, 0.516892], ep=[77, 0.516892], ep=[74, 0.483108], ep=[72, 0.516892], ep=[198, 0.483108], ep=[200,0.516892], ep=[194, 0.483108], ep=[196, 0.516892],
-        ep=[230, 0.483108], ep=[232, 0.516892], ep=[249, 0.516892], ep=[246, 0.483108], ep=[244, 0.516892], ep=[741, 0.483108], ep=[743, 0.516892], ep=[737, 0.483108], ep=[739, 0.516892], ep=[773, 0.483108], ep=[775 0.516892],
-        ep=[792, 0.516892], ep=[787, 0.483108], ep=[789, 0.516892], ep=[907, 0.483108], ep=[909, 0.516892], ep=[903, 0.483108], ep=[905, 0.516892], ep=[939, 0.483108], ep=[941, 0.516892], ep=[957, 0.516892], ep=[954, 0.483108],
-        ep=[26, 0.483108], ep=[25, 0.483108], ep= [23, 0.516892], ep=[21, 0.483108], ep=[19, 0.516892])
-        
-       
-
-
-        vertnums = [
-        '.vtx[404]', '.vtx[383]', '.vtx[6]', '.vtx[7]', '.vtx[8]', '.vtx[9]', '.vtx[13]', '.vtx[30]', '.vtx[31]', '.vtx[39]', '.vtx[40]', '.vtx[42]', '.vtx[103]', '.vtx[104]', '.vtx[105]',
-        '.vtx[108]', '.vtx[123]', '.vtx[124]', '.vtx[132]', '.vtx[133]', '.vtx[135]', '.vtx[383]', '.vtx[384]', '.vtx[385]', '.vtx[388]', '.vtx[403]', '.vtx[404]', '.vtx[412]', '.vtx[413]',
-        '.vtx[415]', '.vtx[471]', '.vtx[472]', '.vtx[473]', '.vtx[476]', '.vtx[491]', '.vtx[492]', '.vtx[500]', '.vtx[502]', '.vtx[397]', '.vtx[398]', '.vtx[17]', '.vtx[18]', '.vtx[19]', 
-        '.vtx[24]', '.vtx[25]', '.vtx[34]', '.vtx[35]', '.vtx[46]', '.vtx[48]', '.vtx[49]', '.vtx[112]', '.vtx[113]', '.vtx[117]', '.vtx[118]', '.vtx[127]', '.vtx[128]', '.vtx[139]', 
-        '.vtx[141]', '.vtx[142]', '.vtx[392]', '.vtx[393]', '.vtx[397]', '.vtx[398]', '.vtx[407]', '.vtx[408]', '.vtx[419]', '.vtx[421]', '.vtx[422]', '.vtx[480]', '.vtx[481]', '.vtx[485]',
-        '.vtx[486]', '.vtx[495]', '.vtx[496]', '.vtx[505]', '.vtx[507]', '.vtx[401]', '.vtx[400]', '.vtx[21]', '.vtx[22]', '.vtx[23]', '.vtx[27]', '.vtx[28]', '.vtx[37]', '.vtx[38]', '.vtx[47]',
-        '.vtx[51]', '.vtx[52]', '.vtx[115]', '.vtx[116]', '.vtx[120]', '.vtx[121]', '.vtx[130]', '.vtx[131]', '.vtx[140]', '.vtx[144]', '.vtx[145]', '.vtx[395]', '.vtx[396]', '.vtx[400]', 
-        '.vtx[401]', '.vtx[410]', '.vtx[411]', '.vtx[420]', '.vtx[424]', '.vtx[425]', '.vtx[483]', '.vtx[484]', '.vtx[488]', '.vtx[489]', '.vtx[498]', '.vtx[499]', '.vtx[506]', '.vtx[509]',
-        '.vtx[423]', '.vtx[418]', '.vtx[3]', '.vtx[4]', '.vtx[5]', '.vtx[16]', '.vtx[20]', '.vtx[26]', '.vtx[29]', '.vtx[36]', '.vtx[45]', '.vtx[50]', '.vtx[101]', '.vtx[102]', '.vtx[111]', 
-        '.vtx[114]', '.vtx[119]', '.vtx[122]', '.vtx[129]', '.vtx[138]', '.vtx[143]', '.vtx[381]', '.vtx[382]', '.vtx[391]', '.vtx[394]', '.vtx[399]', '.vtx[402]', '.vtx[409]', '.vtx[418]', 
-        '.vtx[423]', '.vtx[470]', '.vtx[479]', '.vtx[482]', '.vtx[487]', '.vtx[490]', '.vtx[497]', '.vtx[504]', '.vtx[508]', '.vtx[450]', '.vtx[449]', '.vtx[58]', '.vtx[59]', '.vtx[60]', 
-        '.vtx[62]', '.vtx[63]', '.vtx[80]', '.vtx[81]', '.vtx[89]', '.vtx[91]', '.vtx[92]', '.vtx[150]', '.vtx[151]', '.vtx[153]', '.vtx[154]', '.vtx[169]', '.vtx[170]', '.vtx[178]',
-        '.vtx[180]', '.vtx[181]', '.vtx[430]', '.vtx[431]', '.vtx[433]', '.vtx[434]', '.vtx[449]', '.vtx[450]', '.vtx[458]', '.vtx[460]', '.vtx[461]', '.vtx[514]', '.vtx[515]', '.vtx[517]',
-        '.vtx[518]', '.vtx[533]', '.vtx[534]', '.vtx[541]', '.vtx[543]']
-        """
-        
-        
+               
         verts = []
         for vert in vertnums:
             verts.append(appendName(name,vert))
@@ -249,11 +253,8 @@ def createMushroom():
             point = verts[random.randint(0, len(verts) - 1)]
             value = random.uniform(0, 6)
             cmds.select(point)
-            #cmds.softSelect(point, ssd = 3, ssf = 1)
-            
-            #cmds.move(value, relative = True, moveX = True)
+           
             value = random.uniform(0, 1)
-            #cmds.move(value, relative = True, moveZ = True)
             cmds.move(value, relative = True, ls = True, moveY = True)
 
 
@@ -284,15 +285,6 @@ def createMushroom():
         deg = random.uniform(0, 360)
         cmds.rotate(0, deg,0, r=True)
      
-     
-        #smooth
-        cmds.select(name)
-        if (smooth == True):
-            mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
-        
-        #NOT IMPLEMENTED YET: keep copy of lp versions and rename and have in a separate layer
-        
-        
         #move
         #coordinates = randomLocation()
         
@@ -300,3 +292,21 @@ def createMushroom():
         print(zCoordinates[x-1])
         cmds.move(xCoordinates[x-1], 0, zCoordinates[x-1], relative = True)
         #cmds.move(0, 0, , relative = True, z = True)
+     
+        #smooth
+        cmds.select(name)
+        if (smooth == True):
+            
+            if (layers == True):
+                 cmds.duplicate(name, n = inputname + "_HP" + str(x))
+                 mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
+                 cmds.editDisplayLayerMembers('LowPoly', name)
+                 
+                 #setDisplayLayerVis(layer1, False)
+                 
+                 cmds.editDisplayLayerMembers('HighPoly', inputname + "_HP" + str(x))
+                 
+                 #setDisplayLayerVis('HighPoly', True)
+                 
+            else:
+                mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
