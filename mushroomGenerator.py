@@ -27,6 +27,7 @@ smooth = cmds.checkBoxGrp("smooth", numberOfCheckBoxes=1, label='Smooth ', v1=Fa
 layers = cmds.checkBoxGrp("layers", numberOfCheckBoxes=1, label='    Save a LP Copy ', v1=False)
 cmds.checkBoxGrp(layers, edit=True, enable=False)
 
+#NEEDS TO IMPLEMENTED: set layer visiblity HP T, LP F, and make it check for layer with the same name, only create layer if it does not exist
 
 #    if mushroom cap is pointy, it gives off a fantastical vibe
 #    NEEDS TO GET DONE: separate out when capheight > 0 adjust the curve for a smooth round cap
@@ -89,11 +90,25 @@ def randomLocation():
     
     
 def clusterLocation(size):
-    singleCoordinates = normalDistrib(25, 5, size)
+    singleCoordinates = normalDistrib(200, 20, size)
     for i in range(len(singleCoordinates)):
-        singleCoordinates[i] = singleCoordinates[i] - 25
+        singleCoordinates[i] = singleCoordinates[i] - 200
     random.shuffle(singleCoordinates)
     return singleCoordinates
+    
+def setDisplayLayerVis(name, visible):
+    '''Toggle display layer visibility
+
+    Args:
+        name (str): Display layer name
+        on (bool): True to enable layer, False to disable
+    '''
+    
+    cmds.setAttr('{}.visibility'.format(name), visible)
+    cmds.layerButton(name, edit=True, lv=visible)
+    
+
+
     
 def createMushroom():
     inputname = cmds.textFieldGrp(nameparam, query = True, text = True)
@@ -120,8 +135,8 @@ def createMushroom():
     
     #display layers
     if (smooth == True and layers == True):
-        cmds.createDisplayLayer(n="LowPoly")
-        cmds.createDisplayLayer(n="HighPoly")
+        layer1 = cmds.createDisplayLayer(n="LowPoly")
+        layer2 = cmds.createDisplayLayer(n="HighPoly")
     
     for x in range(1, num+1):
         #obj name
@@ -129,10 +144,23 @@ def createMushroom():
 
         addheight = heightlist[x - 1]
         
-      
+        addwidth = random.uniform(0,9)
         
-        #basic mushroom
-        outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight, 0), (0.034739, 4.932942+addheight, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646, 1.019012+addheight, 0), (9.66903, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
+        #basic mushroom 
+        if x%3 == 0:
+            outline = cmds.curve(bezier=True, d=3, p=[(0.0569524, 4.935496+addheight, 0), (0.0569524, 4.935496+addheight, 0), (2.924011, 5.060151+addheight, 0), (4.139394, 4.71735+addheight, 0),(5.354778, 4.37455+addheight, 0), (6.383179, 4.156404+addheight, 0), (6.819471, 3.128003+addheight, 0), (7.255762, 2.099601+addheight, 0), (7.723217, 3.793489-4+addheight, 0), (6.13387, 2.983233-4+addheight, 0), (4.544522, 2.172978-4+addheight, 0), 
+              (2.550047, 3.076724-4+addheight, 0), (2.612374, 2.422287-4+addheight, 0), (2.674701,  1.76785-4+addheight, 0), (2.425392, -4.379682+addheight, 0), (2.83052, -7.748121+addheight, 0),
+               (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7])         
+        elif x%4==0:
+            addwidth = 0.6*addwidth
+            outline = cmds.curve(bezier=True, d=3, p=[(0.0105626, 0.878479+addheight, 0), (0.0105626, 0.878479+addheight, 0), (4.283515, 0.684254+addheight, 0), (5.545978, 1.145538+addheight, 0), (6.808441 + addwidth * 0.7, 1.606823+addheight, 0), (7.949513 + addwidth, 2.189498+addheight, 0), (7.925235 + addwidth*0.8, 1.461154+addheight, 0), (7.900957 + addwidth * 0.6, 0.73281+addheight, 0), 
+            (7.026944,2.887672-4+addheight, 0), (4.720521, 2.863393-4+addheight, 0),(2.414098, 2.839115-4+addheight, 0), (2.923939, 3.179009-4+addheight, 0), (2.7, 1.843712-4+addheight, 0), (3, 0.508414-4+addheight, 0), (2.584045, 0.508414-4+addheight, 0), (3.1, -4.802605+addheight, 0), 
+             (3.3, -6.113625, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
+
+        else:
+            outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight, 0), (0.034739, 4.932942+addheight, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646 + addwidth, 1.019012+addheight, 0), (9.66903 + 0.7*addwidth, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
+        
+        
         
         #adjust curve shape by moving handle
         cmds.select("bezier1.cv[1]")
@@ -206,22 +234,22 @@ def createMushroom():
         
         #randomize shape
         
-        vertnums = ['.vtx[481]', '.vtx[17]', '.vtx[18]', '.vtx[19]', '.vtx[24]', '.vtx[25]', '.vtx[34]', '.vtx[35]', '.vtx[46]', '.vtx[48]', '.vtx[49]', '.vtx[112]', '.vtx[113]', '.vtx[117]',
-        '.vtx[118]', '.vtx[127]', '.vtx[128]', '.vtx[139]', '.vtx[141]', '.vtx[142]', '.vtx[392]', '.vtx[393]', '.vtx[397]', '.vtx[398]', '.vtx[407]', '.vtx[408]', '.vtx[419]', '.vtx[421]',
-        '.vtx[422]', '.vtx[480]', '.vtx[481]', '.vtx[485]', '.vtx[486]', '.vtx[495]', '.vtx[496]', '.vtx[505]', '.vtx[507]', '.vtx[425]', '.vtx[483]', '.vtx[21]', '.vtx[22]', '.vtx[23]', 
+        vertnums = ['.vtx[481]', '.vtx[425]', '.vtx[483]', '.vtx[21]', '.vtx[22]', '.vtx[23]', 
         '.vtx[27]', '.vtx[28]', '.vtx[37]', '.vtx[38]', '.vtx[47]', '.vtx[51]', '.vtx[52]', '.vtx[115]', '.vtx[116]', '.vtx[120]', '.vtx[121]', '.vtx[130]', '.vtx[131]', '.vtx[140]', '.vtx[144]',
         '.vtx[145]', '.vtx[395]', '.vtx[396]', '.vtx[400]', '.vtx[401]', '.vtx[410]', '.vtx[411]', '.vtx[420]', '.vtx[424]', '.vtx[425]', '.vtx[483]', '.vtx[484]', '.vtx[488]', '.vtx[489]', 
         '.vtx[498]', '.vtx[499]', '.vtx[506]', '.vtx[509]', '.vtx[472]', '.vtx[476]', '.vtx[482]',
         '.vtx[381]', '.vtx[3]', '.vtx[4]', '.vtx[5]', '.vtx[16]', '.vtx[20]', '.vtx[26]', '.vtx[29]', '.vtx[36]', '.vtx[45]', '.vtx[50]', '.vtx[101]', '.vtx[102]', '.vtx[111]', '.vtx[114]', 
         '.vtx[119]', '.vtx[122]', '.vtx[129]', '.vtx[138]', '.vtx[143]', '.vtx[381]', '.vtx[382]', '.vtx[391]', '.vtx[394]', '.vtx[399]', '.vtx[402]', '.vtx[409]', '.vtx[418]', '.vtx[423]', 
         '.vtx[470]', '.vtx[479]', '.vtx[482]', '.vtx[487]', '.vtx[490]', '.vtx[497]', '.vtx[504]', '.vtx[508]']
-        
+        # '.vtx[17]', '.vtx[18]', '.vtx[19]', '.vtx[24]', '.vtx[25]', '.vtx[34]', '.vtx[35]', '.vtx[46]', '.vtx[48]', '.vtx[49]', '.vtx[112]', '.vtx[113]', '.vtx[117]',
+        #'.vtx[118]', '.vtx[127]', '.vtx[128]', '.vtx[139]', '.vtx[141]', '.vtx[142]', '.vtx[392]', '.vtx[393]', '.vtx[397]', '.vtx[398]',  '.vtx[407]', '.vtx[408]', '.vtx[419]', '.vtx[421]',
+        #'.vtx[422]', '.vtx[480]', '.vtx[481]', '.vtx[485]', '.vtx[486]', '.vtx[495]', '.vtx[496]', '.vtx[505]', '.vtx[507]',
                
         verts = []
         for vert in vertnums:
             verts.append(appendName(name,vert))
         
-        for j in range(5):
+        for j in range(10):
             point = verts[random.randint(0, len(verts) - 1)]
             value = random.uniform(0, 6)
             cmds.select(point)
@@ -264,7 +292,26 @@ def createMushroom():
         print(zCoordinates[x-1])
         cmds.move(xCoordinates[x-1], 0, zCoordinates[x-1], relative = True)
         #cmds.move(0, 0, , relative = True, z = True)
-     
+        
+        
+        #UVS
+        cmds.polyProjection(name+".f[0:717]", md = 'y')
+        
+        edgenums = ['.e[723]', '.e[897]', '.e[954]', '.e[967]', '.e[972]', '.e[1034]', '.e[1042]', '.e[1049]', '.e[1054]', '.e[1236]', '.e[1299]', '.e[1307]', '.e[1314]', '.e[1319]', '.e[1361]', '.e[1381]', '.e[1386]', '.e[1399]', '.e[1403]', '.e[1412]', '.e[1428]']
+        
+        moreedges = ['.e[10]', '.e[14]', '.e[31]', '.e[41]', '.e[50]', '.e[54]', '.e[68]', '.e[81]', '.e[91]', '.e[189:190]', '.e[206]', '.e[214]', '.e[222]', '.e[226]', '.e[240]', '.e[253]', '.e[263]', '.e[364]', '.e[368]', '.e[372]', '.e[377]', '.e[408]', '.e[412]', '.e[424]', '.e[429]', '.e[432]', '.e[452]', '.e[456]', '.e[465]', '.e[474]', '.e[495]', '.e[500]', '.e[507]', '.e[512]', '.e[521]', '.e[554]', '.e[558]', '.e[560]', '.e[564]', '.e[594]', '.e[596]', '.e[608]', '.e[613]', '.e[616]', '.e[635]', '.e[640]', '.e[647]', '.e[655]', '.e[674]', '.e[679]', '.e[686]', '.e[691]', '.e[700]', '.e[729]', '.e[733]', '.e[749]', '.e[757]', '.e[765]', '.e[769]', '.e[783]', '.e[796]', '.e[806]', '.e[898:899]', '.e[915]', '.e[923]', '.e[931]', '.e[935]', '.e[949]', '.e[961]', '.e[970]', '.e[1067]', '.e[1071]', '.e[1073]', '.e[1077]', '.e[1107]', '.e[1109]', '.e[1121]', '.e[1126]', '.e[1129]', '.e[1148]', '.e[1153]', '.e[1160]', '.e[1168]', '.e[1187]', '.e[1192]', '.e[1199]', '.e[1204]', '.e[1213]', '.e[1245]', '.e[1249]', '.e[1251]', '.e[1255]', '.e[1285]', '.e[1287]', '.e[1298]', '.e[1303]', '.e[1306]', '.e[1322]', '.e[1327]', '.e[1334]', '.e[1342]', '.e[1360]', '.e[1365]', '.e[1372]', '.e[1377]', '.e[1385]']
+        edgenums.extend(moreedges)
+        edges = []
+        for edge in edgenums:
+            edges.append(appendName(name,edge))
+        
+        cmds.polyMapCut(edges)
+        cmds.select(name + '.f[0:717]')
+        cmds.u3dUnfold(name + '.f[0:717]', ite=1, p=0, bi=1, tf=1, ms=1024, rs=0)
+        #performPolyLayoutUV(0);
+        cmds.u3dLayout(name+'.f[0:717]', res=256, scl=1, box=[0, 1, 0, 1])
+        
+        
         #smooth
         cmds.select(name)
         if (smooth == True):
@@ -273,7 +320,12 @@ def createMushroom():
                  cmds.duplicate(name, n = inputname + "_HP" + str(x))
                  mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
                  cmds.editDisplayLayerMembers('LowPoly', name)
-
+                 
+                 #setDisplayLayerVis(layer1, False)
+                 
                  cmds.editDisplayLayerMembers('HighPoly', inputname + "_HP" + str(x))
+                 
+                 #setDisplayLayerVis('HighPoly', True)
+                 
             else:
                 mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
