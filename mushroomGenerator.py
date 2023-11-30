@@ -317,7 +317,12 @@ def createMushroom():
         cmds.shadingNode('volumeNoise', asTexture = True)
         cmds.shadingNode('place3dTexture', asUtility = True)
         cmds.connectAttr('place3dTexture1.wim[0]', 'volumeNoise1.pm')
-        #cmds.connectAttr -f volumeNoise1.outColor capshader.baseColor;
+        cmds.connectAttr('volumeNoise1.outColor', 'capshader.baseColor', f=True)
+        
+        cmds.select('capshader')
+        cmds.setAttr("volumeNoise1.defaultColor", 0.945, 0, 0, type='double3')
+        cmds.setAttr("volumeNoise1.colorOffset", 0.084, 0.0452593, 0.035868, type='double3')
+        cmds.setAttr("volumeNoise1.colorGain", 0.665, 0.24605, 0.24605, type='double3') 
         
         #smooth
         cmds.select(name)
