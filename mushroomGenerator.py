@@ -1,5 +1,42 @@
 import maya.cmds as cmds
 import random
+#from substanceShader import SubstanceShader
+
+class SubstanceShader:
+    def __init__(self, name, type, fileNames):
+        self.name = name
+        self.type = type
+        self.textadd = type + name
+        self.fileNames = fileNames
+        
+    def createSubstanceNode(self):
+        texture = cmds.shadingNode('substanceNode', asTexture=True, n='substanceNode' + self.textadd)
+        cmds.shadingNode('place2dTexture', asUtility=True, n = 'place2dTexture' + self.textadd)
+        cmds.connectAttr('place2dTexture' + self.textadd + '.outUV', 'substanceNode' + self.textadd + '.uv')
+        cmds.connectAttr('place2dTexture' + self.textadd + '.outUvFilterSize', 'substanceNode' + self.textadd + '.uvFilterSize')
+        #load substance .sbar file
+        
+        #file_filter = 'Substance (*.sbsar);;' 
+ 
+        #files = cmds.fileDialog2(cap='Select a Substance file for ' + self.type + ' material', fm=1, dialogStyle=2, okc='Open', fileFilter=file_filter) 
+        
+        #if files: 
+            #substanceFilename = files[0] 
+        print(self.fileNames[0])
+        print(self.fileNames[1])
+        if type == 'cap':
+            substanceFilename = self.fileNames[0]
+        else:
+            substanceFilename = self.fileNames[1]
+        cmds.substanceNodeLoadSubstance('substanceNode' + self.textadd, substanceFilename)
+        cmds.substanceNodeApplyWorkflow('substanceNode' + self.textadd, workflow = cmds.substanceGetWorkflow())
+        shadingGroup = findShadingGroup(texture)
+        if type=='cap':
+            cmds.setAttr('substanceNode' + self.textadd + '.input_spotsScale', 6)
+            cmds.setAttr('substanceNode' + self.textadd + '.input_edgeWidth', 10)
+            cmds.setAttr('substanceNode' + self.textadd + '.input_randomseed', random.randint(1, 10000))
+        return shadingGroup
+
 
 def showParameter(*args):
     showCheckbox = cmds.checkBoxGrp(smooth, q = True)
@@ -107,10 +144,36 @@ def setDisplayLayerVis(name, visible):
     cmds.setAttr('{}.visibility'.format(name), visible)
     cmds.layerButton(name, edit=True, lv=visible)
     
+def findShadingGroup(node): 
+    """ Walks the shader graph to find the shading group """ 
+    result = None 
+ 
+    connections = cmds.listConnections(node, source=False) 
+ 
+    if connections: 
+        for connection in connections: 
+            if cmds.nodeType(connection) == 'shadingEngine': 
+                result = connection 
+            else: 
+                result = findShadingGroup(connection) 
+                if result is not None: 
+                    break 
+ 
+    return result 
 
-
+def findFile(type):
+    file_filter = 'Substance (*.sbsar);;' 
+ 
+    files = cmds.fileDialog2(cap='Select a Substance file for ' + type + ' material', fm=1, dialogStyle=2, okc='Open', fileFilter=file_filter) 
+        
+    if files: 
+        substanceFilename = files[0] 
+        print(substanceFilename)
+        return substanceFilename
     
 def createMushroom():
+    fileNames = [findFile('cap')]
+    fileNames.append(findFile('Gills'))
     inputname = cmds.textFieldGrp(nameparam, query = True, text = True)
    
     num = cmds.intSliderGrp("num", q = True, v=True)
@@ -241,9 +304,6 @@ def createMushroom():
         '.vtx[381]', '.vtx[3]', '.vtx[4]', '.vtx[5]', '.vtx[16]', '.vtx[20]', '.vtx[26]', '.vtx[29]', '.vtx[36]', '.vtx[45]', '.vtx[50]', '.vtx[101]', '.vtx[102]', '.vtx[111]', '.vtx[114]', 
         '.vtx[119]', '.vtx[122]', '.vtx[129]', '.vtx[138]', '.vtx[143]', '.vtx[381]', '.vtx[382]', '.vtx[391]', '.vtx[394]', '.vtx[399]', '.vtx[402]', '.vtx[409]', '.vtx[418]', '.vtx[423]', 
         '.vtx[470]', '.vtx[479]', '.vtx[482]', '.vtx[487]', '.vtx[490]', '.vtx[497]', '.vtx[504]', '.vtx[508]']
-        # '.vtx[17]', '.vtx[18]', '.vtx[19]', '.vtx[24]', '.vtx[25]', '.vtx[34]', '.vtx[35]', '.vtx[46]', '.vtx[48]', '.vtx[49]', '.vtx[112]', '.vtx[113]', '.vtx[117]',
-        #'.vtx[118]', '.vtx[127]', '.vtx[128]', '.vtx[139]', '.vtx[141]', '.vtx[142]', '.vtx[392]', '.vtx[393]', '.vtx[397]', '.vtx[398]',  '.vtx[407]', '.vtx[408]', '.vtx[419]', '.vtx[421]',
-        #'.vtx[422]', '.vtx[480]', '.vtx[481]', '.vtx[485]', '.vtx[486]', '.vtx[495]', '.vtx[496]', '.vtx[505]', '.vtx[507]',
                
         verts = []
         for vert in vertnums:
@@ -312,17 +372,123 @@ def createMushroom():
         cmds.u3dLayout(name+'.f[0:717]', res=256, scl=1, box=[0, 1, 0, 1])
         
         #create a shader
-        capshader = cmds.shadingNode('aiStandardSurface', asShader = True, n='capshader')
+        '''
+        capshader = cmds.shadingNode('aiStandardSurface', asShader = True, n='capshader'+name)
+        cmds.sets(renderable=True, noSurfaceShader= True, empty=True, n= 'aiSurfaceShader' + name + 'SG')
+        cmds.connectAttr('capshader' + name + '.outColor', 'aiSurfaceShader' + name +'SG.surfaceShader', f=True)
         
-        cmds.shadingNode('volumeNoise', asTexture = True)
-        cmds.shadingNode('place3dTexture', asUtility = True)
-        cmds.connectAttr('place3dTexture1.wim[0]', 'volumeNoise1.pm')
-        cmds.connectAttr('volumeNoise1.outColor', 'capshader.baseColor', f=True)
         
-        cmds.select('capshader')
-        cmds.setAttr("volumeNoise1.defaultColor", 0.945, 0, 0, type='double3')
-        cmds.setAttr("volumeNoise1.colorOffset", 0.084, 0.0452593, 0.035868, type='double3')
-        cmds.setAttr("volumeNoise1.colorGain", 0.665, 0.24605, 0.24605, type='double3') 
+        cmds.shadingNode('volumeNoise', asTexture = True, n='volumeNoise' + name)
+        cmds.shadingNode('place3dTexture', asUtility = True, n='place3dTexture' + name)
+        cmds.connectAttr('place3dTexture' + name + '.wim[0]', 'volumeNoise' + name + '.pm')
+        cmds.connectAttr('volumeNoise' + name + '.outColor', 'capshader' + name + '.baseColor', f=True)
+        
+        cmds.select('capshader' + name)
+        cmds.setAttr('volumeNoise' + name + '.defaultColor', 0.945, 0, 0, type='double3')
+        cmds.setAttr('volumeNoise' + name + '.colorOffset', 0.084, 0.0452593, 0.035868, type='double3')
+        cmds.setAttr('volumeNoise' + name + '.colorGain', 0.665, 0.24605, 0.24605, type='double3') 
+        '''
+        #cap shader
+        #capshader = cmds.shadingNode('aiStandardSurface', asShader = True, n='capshader' + name)
+        
+        
+        
+        capShader = SubstanceShader(name, 'cap', fileNames)
+        shadingGroup = capShader.createSubstanceNode()
+        
+        cmds.select(name)
+        if x%3 == 0:
+            facenums = ['.f[387]', '.f[385]', '.f[42:43]', '.f[45:46]', '.f[61:62]', '.f[70]', '.f[72:73]', '.f[122:123]', '.f[125:126]', '.f[141:142]', '.f[150]', '.f[152:153]', '.f[384:385]', '.f[387:388]', '.f[403:404]', '.f[412]', '.f[414:415]', '.f[464:465]', '.f[467:468]', '.f[483:484]', '.f[492]', '.f[494:495]',
+                '.f[353]', '.f[350]', '.f[2:3]', '.f[8]', '.f[11]', '.f[16]', '.f[19]', '.f[24]', '.f[30]', '.f[35]', '.f[82:83]', '.f[88]', '.f[91]', '.f[96]', '.f[99]', '.f[104]', '.f[110]', '.f[115]', '.f[344:345]', '.f[350]', '.f[353]', '.f[358]', '.f[361]', '.f[366]', '.f[372]', '.f[377]', '.f[424:425]', '.f[430]', 
+                '.f[433]', '.f[438]', '.f[441]', '.f[446]', '.f[452]', '.f[457]', '.f[355]', '.f[354]', '.f[12:13]', '.f[17:18]', '.f[25:26]', '.f[32]', '.f[36:37]', '.f[92:93]', '.f[97:98]', '.f[105:106]', '.f[112]', '.f[116:117]', '.f[354:355]', '.f[359:360]', '.f[367:368]', '.f[374]', '.f[378:379]', '.f[434:435]', 
+                '.f[439:440]', '.f[447:448]', '.f[454]', '.f[458:459]', '.f[352]', '.f[351]', '.f[9:10]', '.f[14:15]', '.f[22:23]', '.f[31]', '.f[33:34]', '.f[89:90]', '.f[94:95]', '.f[102:103]', '.f[111]', '.f[113:114]', '.f[351:352]', '.f[356:357]', '.f[364:365]', '.f[373]', '.f[375:376]', '.f[431:432]', '.f[436:437]', 
+                '.f[444:445]', '.f[453]', '.f[455:456]', '.f[348]', '.f[107]', '.f[4:7]', '.f[20:21]', '.f[27:29]', '.f[84:87]', '.f[100:101]', '.f[107:109]', '.f[346:349]', '.f[362:363]', '.f[369:371]', '.f[426:429]', '.f[442:443]', '.f[449:451]', '.f[700]', '.f[684]', '.f[684:700]',
+                '.f[381]', '.f[386]', '.f[39:41]', '.f[44]', '.f[59:60]', '.f[68:69]', '.f[71]', '.f[119:121]', '.f[124]', '.f[139:140]', '.f[148:149]', '.f[151]', '.f[381:383]', '.f[386]', '.f[401:402]', '.f[410:411]', '.f[413]', '.f[461:463]', '.f[466]', '.f[481:482]', '.f[490:491]', '.f[493]', '.f[395]', '.f[396]', 
+                '.f[48:49]', '.f[53:54]', '.f[63:64]', '.f[75]', '.f[77:78]', '.f[128:129]', '.f[133:134]', '.f[143:144]', '.f[155]', '.f[157:158]', '.f[390:391]', '.f[395:396]', '.f[405:406]', '.f[417]', '.f[419:420]', '.f[470:471]', '.f[475:476]', '.f[485:486]', '.f[497]', '.f[499:500]', '.f[399]', '.f[398]', '.f[51:52]', 
+                '.f[56:57]', '.f[66:67]', '.f[76]', '.f[80:81]', '.f[131:132]', '.f[136:137]', '.f[146:147]', '.f[156]', '.f[160:161]', '.f[393:394]', '.f[398:399]', '.f[408:409]', '.f[418]', '.f[422:423]', '.f[473:474]', '.f[478:479]', '.f[488:489]', '.f[498]', '.f[502:503]', '.f[380]', '.f[397]', '.f[0:1]', '.f[38]', 
+                '.f[47]', '.f[50]', '.f[55]', '.f[58]', '.f[65]', '.f[74]', '.f[79]', '.f[118]', '.f[127]', '.f[130]', '.f[135]', '.f[138]', '.f[145]', '.f[154]', '.f[159]', '.f[342:343]', '.f[380]', '.f[389]', '.f[392]', '.f[397]', '.f[400]', '.f[407]', '.f[416]', '.f[421]', '.f[460]', '.f[469]', '.f[472]', '.f[477]', 
+                '.f[480]', '.f[487]', '.f[496]', '.f[501]', '.f[512]', '.f[513]', '.f[167:168]', '.f[170:171]', '.f[186:187]', '.f[195]', '.f[197:198]', '.f[257:258]', '.f[260:261]', '.f[276:277]', '.f[285]', '.f[287:288]', '.f[509:510]', '.f[512:513]', '.f[528:529]', '.f[537]', '.f[539:540]', '.f[599:600]', '.f[602:603]', 
+                '.f[618:619]', '.f[627]', '.f[629:630]']
+        else:
+            facenums = ['.f[387]', '.f[385]', '.f[42:43]', '.f[45:46]', '.f[61:62]', '.f[70]', '.f[72:73]', '.f[122:123]', '.f[125:126]', '.f[141:142]', '.f[150]', '.f[152:153]', '.f[384:385]', '.f[387:388]', '.f[403:404]', '.f[412]', '.f[414:415]', '.f[464:465]', '.f[467:468]', '.f[483:484]', '.f[492]', '.f[494:495]',
+                '.f[353]', '.f[350]', '.f[2:3]', '.f[8]', '.f[11]', '.f[16]', '.f[19]', '.f[24]', '.f[30]', '.f[35]', '.f[82:83]', '.f[88]', '.f[91]', '.f[96]', '.f[99]', '.f[104]', '.f[110]', '.f[115]', '.f[344:345]', '.f[350]', '.f[353]', '.f[358]', '.f[361]', '.f[366]', '.f[372]', '.f[377]', '.f[424:425]', '.f[430]', 
+                '.f[433]', '.f[438]', '.f[441]', '.f[446]', '.f[452]', '.f[457]', '.f[355]', '.f[354]', '.f[12:13]', '.f[17:18]', '.f[25:26]', '.f[32]', '.f[36:37]', '.f[92:93]', '.f[97:98]', '.f[105:106]', '.f[112]', '.f[116:117]', '.f[354:355]', '.f[359:360]', '.f[367:368]', '.f[374]', '.f[378:379]', '.f[434:435]', 
+                '.f[439:440]', '.f[447:448]', '.f[454]', '.f[458:459]', '.f[352]', '.f[351]', '.f[9:10]', '.f[14:15]', '.f[22:23]', '.f[31]', '.f[33:34]', '.f[89:90]', '.f[94:95]', '.f[102:103]', '.f[111]', '.f[113:114]', '.f[351:352]', '.f[356:357]', '.f[364:365]', '.f[373]', '.f[375:376]', '.f[431:432]', '.f[436:437]', 
+                '.f[444:445]', '.f[453]', '.f[455:456]', '.f[348]', '.f[107]', '.f[4:7]', '.f[20:21]', '.f[27:29]', '.f[84:87]', '.f[100:101]', '.f[107:109]', '.f[346:349]', '.f[362:363]', '.f[369:371]', '.f[426:429]', '.f[442:443]', '.f[449:451]', '.f[700]', '.f[684]', '.f[684:700]']
+        faces = []
+        for face in facenums:
+            faces.append(appendName(name, face))
+        cmds.select(faces)
+        
+        cmds.hyperShade(assign = shadingGroup)
+        cmds.select(name)
+        gillShader = SubstanceShader(name, 'Gills', fileNames)
+        shadingGroup = gillShader.createSubstanceNode()
+        
+        
+        
+        cmds.select(name)
+        
+        if x%3 != 0:
+            facev = ['.f[260]', '.f[258]', '.f[167:168]', '.f[170:171]', '.f[186:187]', '.f[195]', '.f[197:198]', '.f[257:258]', '.f[260:261]', '.f[276:277]', '.f[285]', '.f[287:288]', '.f[509:510]', '.f[512:513]', '.f[528:529]', '.f[537]', '.f[539:540]', '.f[599:600]', '.f[602:603]', '.f[618:619]', '.f[627]', '.f[629:630]',
+            '.f[135]', '.f[127]', '.f[0:1]', '.f[38]', '.f[47]', '.f[50]', '.f[55]', '.f[58]', '.f[65]', '.f[74]', '.f[79]', '.f[118]', '.f[127]', '.f[130]', '.f[135]', '.f[138]', '.f[145]', '.f[154]', '.f[159]', '.f[342:343]', '.f[380]', '.f[389]', '.f[392]', '.f[397]', '.f[400]', '.f[407]', '.f[416]', '.f[421]', 
+            '.f[460]', '.f[469]', '.f[472]', '.f[477]', '.f[480]', '.f[487]', '.f[496]', '.f[501]', '.f[136]', '.f[132]', '.f[51:52]', '.f[56:57]', '.f[66:67]', '.f[76]', '.f[80:81]', '.f[131:132]', '.f[136:137]', '.f[146:147]', '.f[156]', '.f[160:161]', '.f[393:394]', '.f[398:399]', '.f[408:409]', '.f[418]',
+             '.f[422:423]', '.f[473:474]', '.f[478:479]', '.f[488:489]', '.f[498]', '.f[502:503]', '.f[134]', '.f[128]', '.f[48:49]', '.f[53:54]', '.f[63:64]', '.f[75]', '.f[77:78]', '.f[128:129]', '.f[133:134]', '.f[143:144]', '.f[155]', '.f[157:158]', '.f[390:391]', '.f[395:396]', '.f[405:406]', '.f[417]',
+             '.f[419:420]', '.f[470:471]', '.f[475:476]', '.f[485:486]', '.f[497]', '.f[499:500]', '.f[120]', '.f[124]', '.f[39:41]', '.f[44]', '.f[59:60]', '.f[68:69]', '.f[71]', '.f[119:121]', '.f[124]', '.f[139:140]', '.f[148:149]', '.f[151]', '.f[381:383]', '.f[386]', '.f[401:402]', '.f[410:411]', '.f[413]',
+             '.f[461:463]', '.f[466]', '.f[481:482]', '.f[490:491]', '.f[493]']
+        faces = []
+        for face in facev:
+            faces.append(appendName(name, face))
+        cmds.select(faces)
+        
+        cmds.hyperShade(assign = shadingGroup)
+
+        #'.f[259]', '.f[255]', '.f[164:166]', '.f[169]', '.f[184:185]', '.f[193:194]', '.f[196]', '.f[254:256]', '.f[259]', '.f[274:275]', '.f[283:284]', '.f[286]', '.f[506:508]', '.f[511]', '.f[526:527]', '.f[535:536]', '.f[538]', '.f[596:598]', '.f[601]', '.f[616:617]', '.f[625:626]', '.f[628]',
+        #cmds.sets(forceElement = 'aiSurfaceShader' + name + 'SG')
+        
+        
+        #stem faces
+        
+        '''select -r A2.f[169] ;
+select -tgl A2.f[164] ;
+select -add A2.f[164:166] A2.f[169] A2.f[184:185] A2.f[193:194] A2.f[196] A2.f[254:256] A2.f[259] A2.f[274:275] A2.f[283:284] A2.f[286] A2.f[506:508] A2.f[511] A2.f[526:527] A2.f[535:536] A2.f[538] A2.f[596:598] A2.f[601] A2.f[616:617] A2.f[625:626] A2.f[628] ;
+select -tgl A2.f[178] ;
+select -tgl A2.f[179] ;
+select -add A2.f[173:174] A2.f[178:179] A2.f[188:189] A2.f[200] A2.f[202:203] A2.f[263:264] A2.f[268:269] A2.f[278:279] A2.f[290] A2.f[292:293] A2.f[515:516] A2.f[520:521] A2.f[530:531] A2.f[542] A2.f[544:545] A2.f[605:606] A2.f[610:611] A2.f[620:621] A2.f[632] A2.f[634:635] ;
+select -tgl A2.f[181] ;
+select -tgl A2.f[182] ;
+select -add A2.f[176:177] A2.f[181:182] A2.f[191:192] A2.f[201] A2.f[205:206] A2.f[266:267] A2.f[271:272] A2.f[281:282] A2.f[291] A2.f[295:296] A2.f[518:519] A2.f[523:524] A2.f[533:534] A2.f[543] A2.f[547:548] A2.f[608:609] A2.f[613:614] A2.f[623:624] A2.f[633] A2.f[637:638] ;
+select -tgl A2.f[163] ;
+select -tgl A2.f[180] ;
+select -add A2.f[162:163] A2.f[172] A2.f[175] A2.f[180] A2.f[183] A2.f[190] A2.f[199] A2.f[204] A2.f[252:253] A2.f[262] A2.f[265] A2.f[270] A2.f[273] A2.f[280] A2.f[289] A2.f[294] A2.f[504:505] A2.f[514] A2.f[517] A2.f[522] A2.f[525] A2.f[532] A2.f[541] A2.f[546] A2.f[594:595] A2.f[604] A2.f[607] A2.f[612] A2.f[615] A2.f[622] A2.f[631] A2.f[636] ;
+select -tgl A2.f[214] ;
+select -tgl A2.f[215] ;
+select -add A2.f[209:210] A2.f[214:215] A2.f[229:230] A2.f[235] A2.f[237:238] A2.f[299:300] A2.f[304:305] A2.f[319:320] A2.f[325] A2.f[327:328] A2.f[551:552] A2.f[556:557] A2.f[571:572] A2.f[577] A2.f[579:580] A2.f[641:642] A2.f[646:647] A2.f[661:662] A2.f[667] A2.f[669:670] ;
+select -tgl A2.f[232] ;
+select -tgl A2.f[218] ;
+select -add A2.f[212:213] A2.f[217:218] A2.f[232:233] A2.f[236] A2.f[240:241] A2.f[302:303] A2.f[307:308] A2.f[322:323] A2.f[326] A2.f[330:331] A2.f[554:555] A2.f[559:560] A2.f[574:575] A2.f[578] A2.f[582:583] A2.f[644:645] A2.f[649:650] A2.f[664:665] A2.f[668] A2.f[672:673] ;
+select -tgl A2.f[231] ;
+select -tgl A2.f[207] ;
+select -add A2.f[207:208] A2.f[211] A2.f[216] A2.f[227:228] A2.f[231] A2.f[234] A2.f[239] A2.f[297:298] A2.f[301] A2.f[306] A2.f[317:318] A2.f[321] A2.f[324] A2.f[329] A2.f[549:550] A2.f[553] A2.f[558] A2.f[569:570] A2.f[573] A2.f[576] A2.f[581] A2.f[639:640] A2.f[643] A2.f[648] A2.f[659:660] A2.f[663] A2.f[666] A2.f[671] ;
+select -tgl A2.f[242] ;
+select -tgl A2.f[243] ;
+select -add A2.f[219:220] A2.f[223:224] A2.f[242:243] A2.f[246] A2.f[248:249] A2.f[309:310] A2.f[313:314] A2.f[332:333] A2.f[336] A2.f[338:339] A2.f[561:562] A2.f[565:566] A2.f[584:585] A2.f[588] A2.f[590:591] A2.f[651:652] A2.f[655:656] A2.f[674:675] A2.f[678] A2.f[680:681] ;
+select -tgl A2.f[245] ;
+select -tgl A2.f[244] ;
+select -add A2.f[221:222] A2.f[225:226] A2.f[244:245] A2.f[247] A2.f[250:251] A2.f[311:312] A2.f[315:316] A2.f[334:335] A2.f[337] A2.f[340:341] A2.f[563:564] A2.f[567:568] A2.f[586:587] A2.f[589] A2.f[592:593] A2.f[653:654] A2.f[657:658] A2.f[676:677] A2.f[679] A2.f[682:683] ;
+select -tgl A2.f[701] ;
+select -tgl A2.f[717] ;
+select -add A2.f[701:717] ;
+'''
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         #smooth
         cmds.select(name)
