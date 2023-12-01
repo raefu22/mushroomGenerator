@@ -24,14 +24,16 @@ class SubstanceShader:
             #substanceFilename = files[0] 
         print(self.fileNames[0])
         print(self.fileNames[1])
-        if type == 'cap':
+        if type == 'Cap':
             substanceFilename = self.fileNames[0]
-        else:
+        elif type== 'Gills':
             substanceFilename = self.fileNames[1]
+        elif type== 'Stem':
+            substanceFilename = self.fileNames[2]
         cmds.substanceNodeLoadSubstance('substanceNode' + self.textadd, substanceFilename)
         cmds.substanceNodeApplyWorkflow('substanceNode' + self.textadd, workflow = cmds.substanceGetWorkflow())
         shadingGroup = findShadingGroup(texture)
-        if type=='cap':
+        if type=='Cap':
             cmds.setAttr('substanceNode' + self.textadd + '.input_spotsScale', 6)
             cmds.setAttr('substanceNode' + self.textadd + '.input_edgeWidth', 10)
             cmds.setAttr('substanceNode' + self.textadd + '.input_randomseed', random.randint(1, 10000))
@@ -172,8 +174,10 @@ def findFile(type):
         return substanceFilename
     
 def createMushroom():
-    fileNames = [findFile('cap')]
+    fileNames = [findFile('Cap')]
     fileNames.append(findFile('Gills'))
+    fileNames.append(findFile('Stem'))
+    
     inputname = cmds.textFieldGrp(nameparam, query = True, text = True)
    
     num = cmds.intSliderGrp("num", q = True, v=True)
@@ -418,7 +422,7 @@ def createMushroom():
         faces = []
         for face in facenums:
             faces.append(appendName(name, face))
-        cmds.select(faces)
+        cmds.select(faces, r = True)
         
         cmds.hyperShade(assign = shadingGroup)
         cmds.select(name)
@@ -439,48 +443,35 @@ def createMushroom():
         faces = []
         for face in facev:
             faces.append(appendName(name, face))
-        cmds.select(faces)
+        cmds.select(faces, r = True)
         
         cmds.hyperShade(assign = shadingGroup)
 
         #'.f[259]', '.f[255]', '.f[164:166]', '.f[169]', '.f[184:185]', '.f[193:194]', '.f[196]', '.f[254:256]', '.f[259]', '.f[274:275]', '.f[283:284]', '.f[286]', '.f[506:508]', '.f[511]', '.f[526:527]', '.f[535:536]', '.f[538]', '.f[596:598]', '.f[601]', '.f[616:617]', '.f[625:626]', '.f[628]',
         #cmds.sets(forceElement = 'aiSurfaceShader' + name + 'SG')
         
+        stemShader = SubstanceShader(name, 'Stem', fileNames)
+        shadingGroup = stemShader.createSubstanceNode()
+        
         
         #stem faces
+        stemfacenumbers = ['.f[169]', '.f[164]', '.f[164:166]', '.f[169]', '.f[184:185]', '.f[193:194]', '.f[196]', '.f[254:256]', '.f[259]', '.f[274:275]', '.f[283:284]', '.f[286]', '.f[506:508]', '.f[511]', '.f[526:527]', '.f[535:536]', '.f[538]', '.f[596:598]', '.f[601]', '.f[616:617]', '.f[625:626]', '.f[628]', '.f[178]', 
+        '.f[179] ', '.f[173:174]', '.f[178:179]', '.f[188:189]', '.f[200]', '.f[202:203]', '.f[263:264]', '.f[268:269]', '.f[278:279]', '.f[290]', '.f[292:293]', '.f[515:516]', '.f[520:521]', '.f[530:531]', '.f[542]', '.f[544:545]', '.f[605:606]', '.f[610:611]', '.f[620:621]', '.f[632]', '.f[634:635]', '.f[181]', '.f[182]',
+        '.f[176:177]', '.f[181:182]', '.f[191:192]', '.f[201]', '.f[205:206]', '.f[266:267]', '.f[271:272]', '.f[281:282]', '.f[291]', '.f[295:296]', '.f[518:519]', '.f[523:524]', '.f[533:534]', '.f[543]', '.f[547:548]', '.f[608:609]', '.f[613:614]', '.f[623:624]', '.f[633]', '.f[637:638]', '.f[163]', '.f[180]', '.f[162:163]',
+        '.f[172]', '.f[175]', '.f[180]', '.f[183]', '.f[190]', '.f[199]', '.f[204]', '.f[252:253]', '.f[262]', '.f[265]', '.f[270]', '.f[273]', '.f[280]', '.f[289]', '.f[294]', '.f[504:505]', '.f[514]', '.f[517]', '.f[522]', '.f[525]', '.f[532]', '.f[541]', '.f[546]', '.f[594:595]', '.f[604]', '.f[607]', '.f[612]', '.f[615]', 
+        '.f[622]', '.f[631]', '.f[636]', '.f[214]', '.f[215]', '.f[209:210]', '.f[214:215]', '.f[229:230]', '.f[235]', '.f[237:238]', '.f[299:300]', '.f[304:305]', '.f[319:320]', '.f[325]', '.f[327:328]', '.f[551:552]', '.f[556:557]', '.f[571:572]', '.f[577]', '.f[579:580]', '.f[641:642]', '.f[646:647]', '.f[661:662]',
+         '.f[667]', '.f[669:670]', '.f[232]', '.f[218]', '.f[212:213]', '.f[217:218]', '.f[232:233]', '.f[236]', '.f[240:241]', '.f[302:303]', '.f[307:308]', '.f[322:323]', '.f[326]', '.f[330:331]', '.f[554:555]', '.f[559:560]', '.f[574:575]', '.f[578]', '.f[582:583]', '.f[644:645]', '.f[649:650]', '.f[664:665]', '.f[668]', 
+         '.f[672:673]', '.f[231]', '.f[207]', '.f[207:208]', '.f[211]', '.f[216]', '.f[227:228]', '.f[231]', '.f[234]', '.f[239]', '.f[297:298]', '.f[301]', '.f[306]', '.f[317:318]', '.f[321]', '.f[324]', '.f[329]', '.f[549:550]', '.f[553]', '.f[558]', '.f[569:570]', '.f[573]', '.f[576]', '.f[581]', '.f[639:640]', '.f[643]',
+         '.f[648]', '.f[659:660]', '.f[663]', '.f[666]', '.f[671]', '.f[242]', '.f[243]', '.f[219:220]', '.f[223:224]', '.f[242:243]', '.f[246]', '.f[248:249]', '.f[309:310]', '.f[313:314]', '.f[332:333]', '.f[336]', '.f[338:339]', '.f[561:562]', '.f[565:566]', '.f[584:585]', '.f[588]', '.f[590:591]', '.f[651:652]', '.f[655:656]',
+         '.f[674:675]', '.f[678]', '.f[680:681]', '.f[245]', '.f[244]', '.f[221:222]', '.f[225:226]', '.f[244:245]', '.f[247]', '.f[250:251]', '.f[311:312]', '.f[315:316]', '.f[334:335]', '.f[337]', '.f[340:341]', '.f[563:564]', '.f[567:568]', '.f[586:587]', '.f[589]', '.f[592:593]', '.f[653:654]', '.f[657:658]', '.f[676:677]',
+         '.f[679]', '.f[682:683]', '.f[701]', '.f[717]', '.f[701:717]']
+
+        stemfaces = []
+        for stemface in stemfacenumbers:
+            stemfaces.append(appendName(name, stemface))
+        cmds.select(stemfaces, r = True)
         
-        '''select -r A2.f[169] ;
-select -tgl A2.f[164] ;
-select -add A2.f[164:166] A2.f[169] A2.f[184:185] A2.f[193:194] A2.f[196] A2.f[254:256] A2.f[259] A2.f[274:275] A2.f[283:284] A2.f[286] A2.f[506:508] A2.f[511] A2.f[526:527] A2.f[535:536] A2.f[538] A2.f[596:598] A2.f[601] A2.f[616:617] A2.f[625:626] A2.f[628] ;
-select -tgl A2.f[178] ;
-select -tgl A2.f[179] ;
-select -add A2.f[173:174] A2.f[178:179] A2.f[188:189] A2.f[200] A2.f[202:203] A2.f[263:264] A2.f[268:269] A2.f[278:279] A2.f[290] A2.f[292:293] A2.f[515:516] A2.f[520:521] A2.f[530:531] A2.f[542] A2.f[544:545] A2.f[605:606] A2.f[610:611] A2.f[620:621] A2.f[632] A2.f[634:635] ;
-select -tgl A2.f[181] ;
-select -tgl A2.f[182] ;
-select -add A2.f[176:177] A2.f[181:182] A2.f[191:192] A2.f[201] A2.f[205:206] A2.f[266:267] A2.f[271:272] A2.f[281:282] A2.f[291] A2.f[295:296] A2.f[518:519] A2.f[523:524] A2.f[533:534] A2.f[543] A2.f[547:548] A2.f[608:609] A2.f[613:614] A2.f[623:624] A2.f[633] A2.f[637:638] ;
-select -tgl A2.f[163] ;
-select -tgl A2.f[180] ;
-select -add A2.f[162:163] A2.f[172] A2.f[175] A2.f[180] A2.f[183] A2.f[190] A2.f[199] A2.f[204] A2.f[252:253] A2.f[262] A2.f[265] A2.f[270] A2.f[273] A2.f[280] A2.f[289] A2.f[294] A2.f[504:505] A2.f[514] A2.f[517] A2.f[522] A2.f[525] A2.f[532] A2.f[541] A2.f[546] A2.f[594:595] A2.f[604] A2.f[607] A2.f[612] A2.f[615] A2.f[622] A2.f[631] A2.f[636] ;
-select -tgl A2.f[214] ;
-select -tgl A2.f[215] ;
-select -add A2.f[209:210] A2.f[214:215] A2.f[229:230] A2.f[235] A2.f[237:238] A2.f[299:300] A2.f[304:305] A2.f[319:320] A2.f[325] A2.f[327:328] A2.f[551:552] A2.f[556:557] A2.f[571:572] A2.f[577] A2.f[579:580] A2.f[641:642] A2.f[646:647] A2.f[661:662] A2.f[667] A2.f[669:670] ;
-select -tgl A2.f[232] ;
-select -tgl A2.f[218] ;
-select -add A2.f[212:213] A2.f[217:218] A2.f[232:233] A2.f[236] A2.f[240:241] A2.f[302:303] A2.f[307:308] A2.f[322:323] A2.f[326] A2.f[330:331] A2.f[554:555] A2.f[559:560] A2.f[574:575] A2.f[578] A2.f[582:583] A2.f[644:645] A2.f[649:650] A2.f[664:665] A2.f[668] A2.f[672:673] ;
-select -tgl A2.f[231] ;
-select -tgl A2.f[207] ;
-select -add A2.f[207:208] A2.f[211] A2.f[216] A2.f[227:228] A2.f[231] A2.f[234] A2.f[239] A2.f[297:298] A2.f[301] A2.f[306] A2.f[317:318] A2.f[321] A2.f[324] A2.f[329] A2.f[549:550] A2.f[553] A2.f[558] A2.f[569:570] A2.f[573] A2.f[576] A2.f[581] A2.f[639:640] A2.f[643] A2.f[648] A2.f[659:660] A2.f[663] A2.f[666] A2.f[671] ;
-select -tgl A2.f[242] ;
-select -tgl A2.f[243] ;
-select -add A2.f[219:220] A2.f[223:224] A2.f[242:243] A2.f[246] A2.f[248:249] A2.f[309:310] A2.f[313:314] A2.f[332:333] A2.f[336] A2.f[338:339] A2.f[561:562] A2.f[565:566] A2.f[584:585] A2.f[588] A2.f[590:591] A2.f[651:652] A2.f[655:656] A2.f[674:675] A2.f[678] A2.f[680:681] ;
-select -tgl A2.f[245] ;
-select -tgl A2.f[244] ;
-select -add A2.f[221:222] A2.f[225:226] A2.f[244:245] A2.f[247] A2.f[250:251] A2.f[311:312] A2.f[315:316] A2.f[334:335] A2.f[337] A2.f[340:341] A2.f[563:564] A2.f[567:568] A2.f[586:587] A2.f[589] A2.f[592:593] A2.f[653:654] A2.f[657:658] A2.f[676:677] A2.f[679] A2.f[682:683] ;
-select -tgl A2.f[701] ;
-select -tgl A2.f[717] ;
-select -add A2.f[701:717] ;
-'''
-        
+        cmds.hyperShade(assign = shadingGroup)
         
         
         
