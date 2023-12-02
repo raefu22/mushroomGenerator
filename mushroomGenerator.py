@@ -3,11 +3,11 @@ import random
 #from substanceShader import SubstanceShader
 
 class SubstanceShader:
-    def __init__(self, name, type, fileNames):
+    def __init__(self, name, type):
         self.name = name
         self.type = type
         self.textadd = type + name
-        self.fileNames = fileNames
+        
         
     def createSubstanceNode(self):
         texture = cmds.shadingNode('substanceNode', asTexture=True, n='substanceNode' + self.textadd)
@@ -16,12 +16,14 @@ class SubstanceShader:
         cmds.connectAttr('place2dTexture' + self.textadd + '.outUvFilterSize', 'substanceNode' + self.textadd + '.uvFilterSize')
         #load substance .sbar file
         
-        #file_filter = 'Substance (*.sbsar);;' 
+        file_filter = 'Substance (*.sbsar);;' 
  
-        #files = cmds.fileDialog2(cap='Select a Substance file for ' + self.type + ' material', fm=1, dialogStyle=2, okc='Open', fileFilter=file_filter) 
+        files = cmds.fileDialog2(cap='Select a Substance file for ' + self.type + ' material', fm=1, dialogStyle=2, okc='Open', fileFilter=file_filter) 
         
-        #if files: 
-            #substanceFilename = files[0] 
+        if files: 
+            substanceFilename = files[0] 
+        
+        '''
         print(self.fileNames[0])
         print(self.fileNames[1])
         if type == 'Cap':
@@ -30,10 +32,12 @@ class SubstanceShader:
             substanceFilename = self.fileNames[1]
         elif type== 'Stem':
             substanceFilename = self.fileNames[2]
+        '''
+        
         cmds.substanceNodeLoadSubstance('substanceNode' + self.textadd, substanceFilename)
         cmds.substanceNodeApplyWorkflow('substanceNode' + self.textadd, workflow = cmds.substanceGetWorkflow())
         shadingGroup = findShadingGroup(texture)
-        if type=='Cap':
+        if self.type=='Cap':
             cmds.setAttr('substanceNode' + self.textadd + '.input_spotsScale', 6)
             cmds.setAttr('substanceNode' + self.textadd + '.input_edgeWidth', 10)
             cmds.setAttr('substanceNode' + self.textadd + '.input_randomseed', random.randint(1, 10000))
@@ -47,31 +51,59 @@ def showParameter(*args):
 def hideParameter(*args):
     showCheckbox = cmds.checkBoxGrp(smooth, q = True, vis = False, v1 = False)
     cmds.checkBoxGrp(layers, edit=True, enable=False)
+    
+    
+def showCustom(*args):
+    showCheckbox = cmds.checkBoxGrp(substanceMaterials, q = True)
+    cmds.checkBoxGrp(custom, edit=True, enable=True) 
+   
+def hideCustom(*args):
+    showCheckbox = cmds.checkBoxGrp(substanceMaterials, q = True, vis = False, v1 = False)
+    cmds.checkBoxGrp(custom, edit=True, enable=False)
    
 #UI
-window = cmds.window(title="Mushroom Generator", menuBar = True, width=200)
-cmds.columnLayout("Block")
+window = cmds.window(title='Mushroom Generator', menuBar = True, width=250)
+container = cmds.columnLayout()
+cols = cmds.rowLayout(numberOfColumns=3, p=container)
+leftmar = cmds.columnLayout(p=cols)
+cmds.text('         ', p =leftmar)
+maincol = cmds.columnLayout('Block', p=cols)
 
-
-nameparam = cmds.textFieldGrp(label = 'Name')
-
-cmds.intSliderGrp("num", label="Number of Mushrooms", field = True, min = 1, max = 20, v = 4)
-cmds.intSliderGrp("height", label="Average Height", field = True, min = 1, max = 15, v = 4)
-cmds.floatSliderGrp("heightstd", label="Height Standard Deviation", field = True, min = 0.5, max = 8, v = 1)
-cmds.intSliderGrp("bend", label="Average Bend", field = True, min = 0, max = 10, v = 2)
-cmds.floatSliderGrp("bendstd", label="Bend Standard Deviation", field = True, min = 0.1, max = 10, v = 0.5)
-
+cmds.separator(height = 10)
+nameparam = cmds.textFieldGrp(label = 'Name ')
+cmds.separator(height = 10)
+cmds.intSliderGrp("num", label="Number of Mushrooms ", field = True, min = 1, max = 20, v = 4)
+cmds.floatSliderGrp("spread", label="Location Scatter ", field = True, min = 1, max = 50, v = 20)
+cmds.separator(height = 10)
+cmds.intSliderGrp("height", label="Average Height ", field = True, min = 1, max = 15, v = 4)
+cmds.floatSliderGrp("heightstd", label="Height Standard Deviation ", field = True, min = 0.5, max = 8, v = 1)
+cmds.separator(height = 10)
+cmds.intSliderGrp("bend", label="Average Bend ", field = True, min = 0, max = 10, v = 2)
+cmds.floatSliderGrp("bendstd", label="Bend Standard Deviation ", field = True, min = 0.1, max = 10, v = 0.5)
+cmds.separator(height = 10)
 smooth = cmds.checkBoxGrp("smooth", numberOfCheckBoxes=1, label='Smooth ', v1=False, onc = showParameter, ofc = hideParameter)
 
-layers = cmds.checkBoxGrp("layers", numberOfCheckBoxes=1, label='    Save a LP Copy ', v1=False)
+layers = cmds.checkBoxGrp("layers", numberOfCheckBoxes=1, label='    Save a LP Copy ', v1=False, cal=[1, 'right'])
 cmds.checkBoxGrp(layers, edit=True, enable=False)
+cmds.separator(height = 10)
+substanceMaterials = cmds.checkBoxGrp("substanceMaterials", numberOfCheckBoxes=1, label='Place Substance Materials ', v1=False, onc = showCustom, ofc = hideCustom)
 
-#NEEDS TO IMPLEMENTED: set layer visiblity HP T, LP F, and make it check for layer with the same name, only create layer if it does not exist
+custom = cmds.checkBoxGrp("custom", numberOfCheckBoxes=1, label='    Custom Substance ', v1=False)
+cmds.checkBoxGrp(custom, edit=True, enable=False)
 
-#    if mushroom cap is pointy, it gives off a fantastical vibe
-#    NEEDS TO GET DONE: separate out when capheight > 0 adjust the curve for a smooth round cap
 
-cmds.button(label="Create Mushroom", c="createMushroom()")
+
+cmds.separator(height = 10)
+
+submitrow = cmds.rowLayout(numberOfColumns=2, p=maincol)
+cmds.text(label='                                                                                           ')
+cmds.button(label="Create Mushroom(s)", c="createMushroom()", p = submitrow)
+
+cmds.separator(height = 10, p = maincol)
+
+rightmar = cmds.columnLayout(p=cols)
+cmds.text('         ', p =rightmar)
+
 cmds.showWindow(window)
 
 def appendName(name, textstring):
@@ -121,15 +153,8 @@ def normalDistrib(mean, std, size):
             
     return heightlist
     
-def randomLocation():
-    coordinates = []
-    for i in range(2):
-        coordinates.append(random.uniform(-40, 45))
-    return coordinates
-    
-    
-def clusterLocation(size):
-    singleCoordinates = normalDistrib(200, 20, size)
+def clusterLocation(size, spread):
+    singleCoordinates = normalDistrib(200, spread, size)
     for i in range(len(singleCoordinates)):
         singleCoordinates[i] = singleCoordinates[i] - 200
     random.shuffle(singleCoordinates)
@@ -174,13 +199,17 @@ def findFile(type):
         return substanceFilename
     
 def createMushroom():
+    
+    '''
     fileNames = [findFile('Cap')]
     fileNames.append(findFile('Gills'))
     fileNames.append(findFile('Stem'))
+    '''
     
     inputname = cmds.textFieldGrp(nameparam, query = True, text = True)
    
     num = cmds.intSliderGrp("num", q = True, v=True)
+    spread = cmds.floatSliderGrp("spread", q = True, v = True)
     height = cmds.intSliderGrp("height", q = True, v=True)
     heightstd = cmds.floatSliderGrp("heightstd", q = True, v=True)
     
@@ -197,13 +226,22 @@ def createMushroom():
     bendlist = normalDistrib(bend, bendstd, num)  
     
     
-    xCoordinates = clusterLocation(num)
-    zCoordinates = clusterLocation(num)
+    xCoordinates = clusterLocation(num, spread)
+    zCoordinates = clusterLocation(num, spread)
     
     #display layers
     if (smooth == True and layers == True):
         layer1 = cmds.createDisplayLayer(n="LowPoly")
         layer2 = cmds.createDisplayLayer(n="HighPoly")
+    
+    capShader = SubstanceShader(inputname, 'Cap')
+    capShadingGroup = capShader.createSubstanceNode()
+    
+    gillsShader = SubstanceShader(inputname, 'Gills')
+    gillsShadingGroup = gillsShader.createSubstanceNode()
+    
+    stemShader = SubstanceShader(inputname, 'Stem')
+    stemShadingGroup = stemShader.createSubstanceNode()
     
     for x in range(1, num+1):
         #obj name
@@ -396,9 +434,12 @@ def createMushroom():
         #capshader = cmds.shadingNode('aiStandardSurface', asShader = True, n='capshader' + name)
         
         
-        
+        '''
         capShader = SubstanceShader(name, 'cap', fileNames)
         shadingGroup = capShader.createSubstanceNode()
+        '''
+        
+        
         
         cmds.select(name)
         if x%3 == 0:
@@ -424,11 +465,13 @@ def createMushroom():
             faces.append(appendName(name, face))
         cmds.select(faces, r = True)
         
-        cmds.hyperShade(assign = shadingGroup)
+        cmds.hyperShade(assign = capShadingGroup)
         cmds.select(name)
+        
+        '''
         gillShader = SubstanceShader(name, 'Gills', fileNames)
         shadingGroup = gillShader.createSubstanceNode()
-        
+        '''
         
         
         cmds.select(name)
@@ -445,14 +488,14 @@ def createMushroom():
             faces.append(appendName(name, face))
         cmds.select(faces, r = True)
         
-        cmds.hyperShade(assign = shadingGroup)
+        cmds.hyperShade(assign = gillsShadingGroup)
 
         #'.f[259]', '.f[255]', '.f[164:166]', '.f[169]', '.f[184:185]', '.f[193:194]', '.f[196]', '.f[254:256]', '.f[259]', '.f[274:275]', '.f[283:284]', '.f[286]', '.f[506:508]', '.f[511]', '.f[526:527]', '.f[535:536]', '.f[538]', '.f[596:598]', '.f[601]', '.f[616:617]', '.f[625:626]', '.f[628]',
         #cmds.sets(forceElement = 'aiSurfaceShader' + name + 'SG')
-        
+        '''
         stemShader = SubstanceShader(name, 'Stem', fileNames)
         shadingGroup = stemShader.createSubstanceNode()
-        
+        '''
         
         #stem faces
         stemfacenumbers = ['.f[169]', '.f[164]', '.f[164:166]', '.f[169]', '.f[184:185]', '.f[193:194]', '.f[196]', '.f[254:256]', '.f[259]', '.f[274:275]', '.f[283:284]', '.f[286]', '.f[506:508]', '.f[511]', '.f[526:527]', '.f[535:536]', '.f[538]', '.f[596:598]', '.f[601]', '.f[616:617]', '.f[625:626]', '.f[628]', '.f[178]', 
@@ -471,7 +514,7 @@ def createMushroom():
             stemfaces.append(appendName(name, stemface))
         cmds.select(stemfaces, r = True)
         
-        cmds.hyperShade(assign = shadingGroup)
+        cmds.hyperShade(assign = stemShadingGroup)
         
         
         
