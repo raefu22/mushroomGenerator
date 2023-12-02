@@ -1,6 +1,36 @@
 import maya.cmds as cmds
 import random
 
+class SubstanceShader:
+    def __init__(self, name, type, custom):
+        self.name = name
+        self.type = type
+        self.textadd = type + name
+        self.custom = custom
+        
+        
+    def createSubstanceNode(self):
+        texture = cmds.shadingNode('substanceNode', asTexture=True, n='substanceNode' + self.textadd)
+        cmds.shadingNode('place2dTexture', asUtility=True, n = 'place2dTexture' + self.textadd)
+        cmds.connectAttr('place2dTexture' + self.textadd + '.outUV', 'substanceNode' + self.textadd + '.uv')
+        cmds.connectAttr('place2dTexture' + self.textadd + '.outUvFilterSize', 'substanceNode' + self.textadd + '.uvFilterSize')
+        
+        #load substance .sbar file
+        file_filter = 'Substance (*.sbsar);;' 
+        files = cmds.fileDialog2(cap='Select A Substance File For ' + self.type + ' Material', fm=1, dialogStyle=2, okc='Open', fileFilter=file_filter) 
+        
+        if files: 
+            substanceFilename = files[0] 
+        
+        cmds.substanceNodeLoadSubstance('substanceNode' + self.textadd, substanceFilename)
+        cmds.substanceNodeApplyWorkflow('substanceNode' + self.textadd, workflow = cmds.substanceGetWorkflow())
+        shadingGroup = findShadingGroup(texture)
+        if (self.type=='Cap' and self.custom == False):
+            cmds.setAttr('substanceNode' + self.textadd + '.input_spotsScale', 6)
+            cmds.setAttr('substanceNode' + self.textadd + '.input_edgeWidth', 10)
+            cmds.setAttr('substanceNode' + self.textadd + '.input_randomseed', 4)
+        return shadingGroup
+
 def showParameter(*args):
     showCheckbox = cmds.checkBoxGrp(smooth, q = True)
     cmds.checkBoxGrp(layers, edit=True, enable=True) 
@@ -8,31 +38,52 @@ def showParameter(*args):
 def hideParameter(*args):
     showCheckbox = cmds.checkBoxGrp(smooth, q = True, vis = False, v1 = False)
     cmds.checkBoxGrp(layers, edit=True, enable=False)
+    
+def showCustom(*args):
+    showCheckbox = cmds.checkBoxGrp(substanceMaterials, q = True)
+    cmds.checkBoxGrp(custom, edit=True, enable=True) 
+   
+def hideCustom(*args):
+    showCheckbox = cmds.checkBoxGrp(substanceMaterials, q = True, vis = False, v1 = False)
+    cmds.checkBoxGrp(custom, edit=True, enable=False)
    
 #UI
-window = cmds.window(title="Mushroom Generator", menuBar = True, width=200)
-cmds.columnLayout("Block")
+window = cmds.window(title='Mushroom Generator', menuBar = True, width=250)
+container = cmds.columnLayout()
+cols = cmds.rowLayout(numberOfColumns=3, p=container)
+leftmar = cmds.columnLayout(p=cols)
+cmds.text('         ', p =leftmar)
+maincol = cmds.columnLayout('Block', p=cols)
 
-
-nameparam = cmds.textFieldGrp(label = 'Name')
-
-cmds.intSliderGrp("num", label="Number of Mushrooms", field = True, min = 1, max = 20, v = 4)
-cmds.intSliderGrp("height", label="Average Height", field = True, min = 1, max = 15, v = 4)
-cmds.floatSliderGrp("heightstd", label="Height Standard Deviation", field = True, min = 0.5, max = 8, v = 1)
-cmds.intSliderGrp("bend", label="Average Bend", field = True, min = 0, max = 10, v = 2)
-cmds.floatSliderGrp("bendstd", label="Bend Standard Deviation", field = True, min = 0.1, max = 10, v = 0.5)
-
+cmds.separator(height = 10)
+nameparam = cmds.textFieldGrp(label = 'Name ')
+cmds.separator(height = 10)
+cmds.intSliderGrp("num", label="Number of Mushrooms ", field = True, min = 1, max = 20, v = 4)
+cmds.floatSliderGrp("spread", label="Location Scatter ", field = True, min = 1, max = 50, v = 20)
+cmds.separator(height = 10)
+cmds.intSliderGrp("height", label="Average Height ", field = True, min = 1, max = 15, v = 4)
+cmds.floatSliderGrp("heightstd", label="Height Standard Deviation ", field = True, min = 0.5, max = 8, v = 1)
+cmds.separator(height = 10)
+cmds.intSliderGrp("bend", label="Average Bend ", field = True, min = 0, max = 10, v = 2)
+cmds.floatSliderGrp("bendstd", label="Bend Standard Deviation ", field = True, min = 0.1, max = 10, v = 0.5)
+cmds.separator(height = 10)
 smooth = cmds.checkBoxGrp("smooth", numberOfCheckBoxes=1, label='Smooth ', v1=False, onc = showParameter, ofc = hideParameter)
-
-layers = cmds.checkBoxGrp("layers", numberOfCheckBoxes=1, label='    Save a LP Copy ', v1=False)
+layers = cmds.checkBoxGrp("layers", numberOfCheckBoxes=1, label='    Save a LP Copy ', v1=False, cal=[1, 'right'])
 cmds.checkBoxGrp(layers, edit=True, enable=False)
+cmds.separator(height = 10)
+substanceMaterials = cmds.checkBoxGrp("substanceMaterials", numberOfCheckBoxes=1, label='Place Substance Materials ', v1=False, onc = showCustom, ofc = hideCustom)
+custom = cmds.checkBoxGrp("custom", numberOfCheckBoxes=1, label='    Custom Substance ', v1=False)
+cmds.checkBoxGrp(custom, edit=True, enable=False)
 
-#NEEDS TO IMPLEMENTED: set layer visiblity HP T, LP F, and make it check for layer with the same name, only create layer if it does not exist
+cmds.separator(height = 10)
+submitrow = cmds.rowLayout(numberOfColumns=2, p=maincol)
+cmds.text(label='                                                                                           ')
+cmds.button(label="Create Mushroom(s)", c="createMushroom()", p = submitrow)
 
-#    if mushroom cap is pointy, it gives off a fantastical vibe
-#    NEEDS TO GET DONE: separate out when capheight > 0 adjust the curve for a smooth round cap
+cmds.separator(height = 10, p = maincol)
+rightmar = cmds.columnLayout(p=cols)
+cmds.text('         ', p =rightmar)
 
-cmds.button(label="Create Mushroom", c="createMushroom()")
 cmds.showWindow(window)
 
 def appendName(name, textstring):
@@ -82,37 +133,17 @@ def normalDistrib(mean, std, size):
             
     return heightlist
     
-def randomLocation():
-    coordinates = []
-    for i in range(2):
-        coordinates.append(random.uniform(-40, 45))
-    return coordinates
-    
-    
-def clusterLocation(size):
-    singleCoordinates = normalDistrib(200, 20, size)
+def clusterLocation(size, spread):
+    singleCoordinates = normalDistrib(200, spread, size)
     for i in range(len(singleCoordinates)):
         singleCoordinates[i] = singleCoordinates[i] - 200
     random.shuffle(singleCoordinates)
     return singleCoordinates
     
-def setDisplayLayerVis(name, visible):
-    '''Toggle display layer visibility
-
-    Args:
-        name (str): Display layer name
-        on (bool): True to enable layer, False to disable
-    '''
-    
-    cmds.setAttr('{}.visibility'.format(name), visible)
-    cmds.layerButton(name, edit=True, lv=visible)
-    
+#finds the shaderGroup the node is connected to
 def findShadingGroup(node): 
-    """ Walks the shader graph to find the shading group """ 
     result = None 
- 
     connections = cmds.listConnections(node, source=False) 
- 
     if connections: 
         for connection in connections: 
             if cmds.nodeType(connection) == 'shadingEngine': 
@@ -121,14 +152,24 @@ def findShadingGroup(node):
                 result = findShadingGroup(connection) 
                 if result is not None: 
                     break 
- 
     return result 
 
-    
+def findFile(type):
+    file_filter = 'Substance (*.sbsar);;' 
+ 
+    files = cmds.fileDialog2(cap='Select a Substance file for ' + type + ' material', fm=1, dialogStyle=2, okc='Open', fileFilter=file_filter) 
+        
+    if files: 
+        substanceFilename = files[0] 
+        print(substanceFilename)
+        return substanceFilename
+
+#main function    
 def createMushroom():
     inputname = cmds.textFieldGrp(nameparam, query = True, text = True)
    
     num = cmds.intSliderGrp("num", q = True, v=True)
+    spread = cmds.floatSliderGrp("spread", q = True, v = True)
     height = cmds.intSliderGrp("height", q = True, v=True)
     heightstd = cmds.floatSliderGrp("heightstd", q = True, v=True)
     
@@ -138,27 +179,40 @@ def createMushroom():
     bendstd = bendstd*10
     
     smooth = cmds.checkBoxGrp("smooth", q = True, v1=True)
-   
     layers = cmds.checkBoxGrp("layers", q = True, v1=True)
+    
+    substanceMaterials = cmds.checkBoxGrp("substanceMaterials", q = True, v1=True)
+    custom = cmds.checkBoxGrp("custom", q = True, v1=True)
+    
     #random
     heightlist = normalDistrib(height, heightstd, num)  
     bendlist = normalDistrib(bend, bendstd, num)  
     
-    
-    xCoordinates = clusterLocation(num)
-    zCoordinates = clusterLocation(num)
+    #determine location
+    xCoordinates = clusterLocation(num, spread)
+    zCoordinates = clusterLocation(num, spread)
     
     #display layers
     if (smooth == True and layers == True):
         layer1 = cmds.createDisplayLayer(n="LowPoly")
         layer2 = cmds.createDisplayLayer(n="HighPoly")
     
+    #set up shaders
+    if substanceMaterials == True:
+        capShader = SubstanceShader(inputname, 'Cap', custom)
+        capShadingGroup = capShader.createSubstanceNode()
+        
+        gillsShader = SubstanceShader(inputname, 'Gills', custom)
+        gillsShadingGroup = gillsShader.createSubstanceNode()
+        
+        stemShader = SubstanceShader(inputname, 'Stem', custom)
+        stemShadingGroup = stemShader.createSubstanceNode()
+    
     for x in range(1, num+1):
         #obj name
         name = inputname + str(x)
 
-        addheight = heightlist[x - 1]
-        
+        addheight = heightlist[x - 1] 
         addwidth = random.uniform(0,9)
         
         #basic mushroom 
@@ -175,14 +229,9 @@ def createMushroom():
         else:
             outline = cmds.curve(bezier=True, d=3, p=[(0.034739, 4.932942+addheight, 0), (0.034739, 4.932942+addheight, 0), (8.812134, 5.859316+addheight, 0), (9.043727, 3.242309+addheight, 0), (9.275321, 0.625303+addheight, 0), (11.938646 + addwidth, 1.019012+addheight, 0), (9.66903 + 0.7*addwidth, -0.741099+addheight, 0), (7.399413, -2.50121+addheight, 0), (6.959385, -1.389561+addheight, 0), (5.662462, -1.389561+addheight, 0), (4.365538, -1.389561+addheight, 0), (2.837021, -0.764259+addheight, 0), (2.582268, -1.78327+addheight, 0), (2.327515, -2.802282+addheight, 0), (2.744383, -3.149672+addheight, 0), (2.813861, -4.377118+addheight, 0), (2.883339, -5.604563, 0), (3.739306, -6.846439, 0), (2.675708, -7.366924, 0), (1.61211, -7.887408, 0), (0.0053979, -7.729, 0), (0.0053979, -7.729, 0)], k=[0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7]) 
         
-        
-        
-        #adjust curve shape by moving handle
         cmds.select("bezier1.cv[1]")
-        
-           
-        
         mushroom = cmds.revolve(outline, ch=1, po=1, rn=0, ssw=0, esw=360, ut=0, tol=0.01, degree=3, s=12, ulp=1, ax=(0, 1, 0), n=name)
+        
         #fix normals
         mushroom = cmds.polyNormal(mushroom, normalMode=0, userNormalMode=1, ch=1, n=name)
         cmds.delete(outline)
@@ -276,11 +325,9 @@ def createMushroom():
         cmds.select(bendDeformer[1])
         lowbound = bendDeformer[0] + '.lowBound'
         cmds.setAttr(lowbound, -3.66)
-     
         highbound = bendDeformer[0] + '.highBound'
         cmds.setAttr(highbound, 0)
         
-     
         #clear history
         cmds.select(name)
         cmds.delete(name, constructionHistory = True)
@@ -298,19 +345,12 @@ def createMushroom():
         cmds.rotate(0, deg,0, r=True)
      
         #move
-        #coordinates = randomLocation()
-        
-        print(xCoordinates[x-1])
-        print(zCoordinates[x-1])
         cmds.move(xCoordinates[x-1], 0, zCoordinates[x-1], relative = True)
-        #cmds.move(0, 0, , relative = True, z = True)
-        
         
         #UVS
         cmds.polyProjection(name+".f[0:717]", md = 'y')
         
-        edgenums = ['.e[723]', '.e[897]', '.e[954]', '.e[967]', '.e[972]', '.e[1034]', '.e[1042]', '.e[1049]', '.e[1054]', '.e[1236]', '.e[1299]', '.e[1307]', '.e[1314]', '.e[1319]', '.e[1361]', '.e[1381]', '.e[1386]', '.e[1399]', '.e[1403]', '.e[1412]', '.e[1428]']
-        
+        edgenums = ['.e[723]', '.e[897]', '.e[954]', '.e[967]', '.e[972]', '.e[1034]', '.e[1042]', '.e[1049]', '.e[1054]', '.e[1236]', '.e[1299]', '.e[1307]', '.e[1314]', '.e[1319]', '.e[1361]', '.e[1381]', '.e[1386]', '.e[1399]', '.e[1403]', '.e[1412]', '.e[1428]']   
         moreedges = ['.e[10]', '.e[14]', '.e[31]', '.e[41]', '.e[50]', '.e[54]', '.e[68]', '.e[81]', '.e[91]', '.e[189:190]', '.e[206]', '.e[214]', '.e[222]', '.e[226]', '.e[240]', '.e[253]', '.e[263]', '.e[364]', '.e[368]', '.e[372]', '.e[377]', '.e[408]', '.e[412]', '.e[424]', '.e[429]', '.e[432]', '.e[452]', '.e[456]', '.e[465]', '.e[474]', '.e[495]', '.e[500]', '.e[507]', '.e[512]', '.e[521]', '.e[554]', '.e[558]', '.e[560]', '.e[564]', '.e[594]', '.e[596]', '.e[608]', '.e[613]', '.e[616]', '.e[635]', '.e[640]', '.e[647]', '.e[655]', '.e[674]', '.e[679]', '.e[686]', '.e[691]', '.e[700]', '.e[729]', '.e[733]', '.e[749]', '.e[757]', '.e[765]', '.e[769]', '.e[783]', '.e[796]', '.e[806]', '.e[898:899]', '.e[915]', '.e[923]', '.e[931]', '.e[935]', '.e[949]', '.e[961]', '.e[970]', '.e[1067]', '.e[1071]', '.e[1073]', '.e[1077]', '.e[1107]', '.e[1109]', '.e[1121]', '.e[1126]', '.e[1129]', '.e[1148]', '.e[1153]', '.e[1160]', '.e[1168]', '.e[1187]', '.e[1192]', '.e[1199]', '.e[1204]', '.e[1213]', '.e[1245]', '.e[1249]', '.e[1251]', '.e[1255]', '.e[1285]', '.e[1287]', '.e[1298]', '.e[1303]', '.e[1306]', '.e[1322]', '.e[1327]', '.e[1334]', '.e[1342]', '.e[1360]', '.e[1365]', '.e[1372]', '.e[1377]', '.e[1385]']
         edgenums.extend(moreedges)
         edges = []
@@ -320,66 +360,73 @@ def createMushroom():
         cmds.polyMapCut(edges)
         cmds.select(name + '.f[0:717]')
         cmds.u3dUnfold(name + '.f[0:717]', ite=1, p=0, bi=1, tf=1, ms=1024, rs=0)
-        #performPolyLayoutUV(0);
         cmds.u3dLayout(name+'.f[0:717]', res=256, scl=1, box=[0, 1, 0, 1])
         
-        #create a shader
-        '''
-        capshader = cmds.shadingNode('aiStandardSurface', asShader = True, n='capshader'+name)
-        cmds.sets(renderable=True, noSurfaceShader= True, empty=True, n= 'aiSurfaceShader' + name + 'SG')
-        cmds.connectAttr('capshader' + name + '.outColor', 'aiSurfaceShader' + name +'SG.surfaceShader', f=True)
+        #create shaders
+        if (substanceMaterials==True):
+            #cap shader
+            cmds.select(name)
+            if x%3 == 0:
+                facenums = ['.f[387]', '.f[385]', '.f[42:43]', '.f[45:46]', '.f[61:62]', '.f[70]', '.f[72:73]', '.f[122:123]', '.f[125:126]', '.f[141:142]', '.f[150]', '.f[152:153]', '.f[384:385]', '.f[387:388]', '.f[403:404]', '.f[412]', '.f[414:415]', '.f[464:465]', '.f[467:468]', '.f[483:484]', '.f[492]', '.f[494:495]',
+                    '.f[353]', '.f[350]', '.f[2:3]', '.f[8]', '.f[11]', '.f[16]', '.f[19]', '.f[24]', '.f[30]', '.f[35]', '.f[82:83]', '.f[88]', '.f[91]', '.f[96]', '.f[99]', '.f[104]', '.f[110]', '.f[115]', '.f[344:345]', '.f[350]', '.f[353]', '.f[358]', '.f[361]', '.f[366]', '.f[372]', '.f[377]', '.f[424:425]', '.f[430]', 
+                    '.f[433]', '.f[438]', '.f[441]', '.f[446]', '.f[452]', '.f[457]', '.f[355]', '.f[354]', '.f[12:13]', '.f[17:18]', '.f[25:26]', '.f[32]', '.f[36:37]', '.f[92:93]', '.f[97:98]', '.f[105:106]', '.f[112]', '.f[116:117]', '.f[354:355]', '.f[359:360]', '.f[367:368]', '.f[374]', '.f[378:379]', '.f[434:435]', 
+                    '.f[439:440]', '.f[447:448]', '.f[454]', '.f[458:459]', '.f[352]', '.f[351]', '.f[9:10]', '.f[14:15]', '.f[22:23]', '.f[31]', '.f[33:34]', '.f[89:90]', '.f[94:95]', '.f[102:103]', '.f[111]', '.f[113:114]', '.f[351:352]', '.f[356:357]', '.f[364:365]', '.f[373]', '.f[375:376]', '.f[431:432]', '.f[436:437]', 
+                    '.f[444:445]', '.f[453]', '.f[455:456]', '.f[348]', '.f[107]', '.f[4:7]', '.f[20:21]', '.f[27:29]', '.f[84:87]', '.f[100:101]', '.f[107:109]', '.f[346:349]', '.f[362:363]', '.f[369:371]', '.f[426:429]', '.f[442:443]', '.f[449:451]', '.f[700]', '.f[684]', '.f[684:700]',
+                    '.f[381]', '.f[386]', '.f[39:41]', '.f[44]', '.f[59:60]', '.f[68:69]', '.f[71]', '.f[119:121]', '.f[124]', '.f[139:140]', '.f[148:149]', '.f[151]', '.f[381:383]', '.f[386]', '.f[401:402]', '.f[410:411]', '.f[413]', '.f[461:463]', '.f[466]', '.f[481:482]', '.f[490:491]', '.f[493]', '.f[395]', '.f[396]', 
+                    '.f[48:49]', '.f[53:54]', '.f[63:64]', '.f[75]', '.f[77:78]', '.f[128:129]', '.f[133:134]', '.f[143:144]', '.f[155]', '.f[157:158]', '.f[390:391]', '.f[395:396]', '.f[405:406]', '.f[417]', '.f[419:420]', '.f[470:471]', '.f[475:476]', '.f[485:486]', '.f[497]', '.f[499:500]', '.f[399]', '.f[398]', '.f[51:52]', 
+                    '.f[56:57]', '.f[66:67]', '.f[76]', '.f[80:81]', '.f[131:132]', '.f[136:137]', '.f[146:147]', '.f[156]', '.f[160:161]', '.f[393:394]', '.f[398:399]', '.f[408:409]', '.f[418]', '.f[422:423]', '.f[473:474]', '.f[478:479]', '.f[488:489]', '.f[498]', '.f[502:503]', '.f[380]', '.f[397]', '.f[0:1]', '.f[38]', 
+                    '.f[47]', '.f[50]', '.f[55]', '.f[58]', '.f[65]', '.f[74]', '.f[79]', '.f[118]', '.f[127]', '.f[130]', '.f[135]', '.f[138]', '.f[145]', '.f[154]', '.f[159]', '.f[342:343]', '.f[380]', '.f[389]', '.f[392]', '.f[397]', '.f[400]', '.f[407]', '.f[416]', '.f[421]', '.f[460]', '.f[469]', '.f[472]', '.f[477]', 
+                    '.f[480]', '.f[487]', '.f[496]', '.f[501]', '.f[512]', '.f[513]', '.f[167:168]', '.f[170:171]', '.f[186:187]', '.f[195]', '.f[197:198]', '.f[257:258]', '.f[260:261]', '.f[276:277]', '.f[285]', '.f[287:288]', '.f[509:510]', '.f[512:513]', '.f[528:529]', '.f[537]', '.f[539:540]', '.f[599:600]', '.f[602:603]', 
+                    '.f[618:619]', '.f[627]', '.f[629:630]']
+            else:
+                facenums = ['.f[387]', '.f[385]', '.f[42:43]', '.f[45:46]', '.f[61:62]', '.f[70]', '.f[72:73]', '.f[122:123]', '.f[125:126]', '.f[141:142]', '.f[150]', '.f[152:153]', '.f[384:385]', '.f[387:388]', '.f[403:404]', '.f[412]', '.f[414:415]', '.f[464:465]', '.f[467:468]', '.f[483:484]', '.f[492]', '.f[494:495]',
+                    '.f[353]', '.f[350]', '.f[2:3]', '.f[8]', '.f[11]', '.f[16]', '.f[19]', '.f[24]', '.f[30]', '.f[35]', '.f[82:83]', '.f[88]', '.f[91]', '.f[96]', '.f[99]', '.f[104]', '.f[110]', '.f[115]', '.f[344:345]', '.f[350]', '.f[353]', '.f[358]', '.f[361]', '.f[366]', '.f[372]', '.f[377]', '.f[424:425]', '.f[430]', 
+                    '.f[433]', '.f[438]', '.f[441]', '.f[446]', '.f[452]', '.f[457]', '.f[355]', '.f[354]', '.f[12:13]', '.f[17:18]', '.f[25:26]', '.f[32]', '.f[36:37]', '.f[92:93]', '.f[97:98]', '.f[105:106]', '.f[112]', '.f[116:117]', '.f[354:355]', '.f[359:360]', '.f[367:368]', '.f[374]', '.f[378:379]', '.f[434:435]', 
+                    '.f[439:440]', '.f[447:448]', '.f[454]', '.f[458:459]', '.f[352]', '.f[351]', '.f[9:10]', '.f[14:15]', '.f[22:23]', '.f[31]', '.f[33:34]', '.f[89:90]', '.f[94:95]', '.f[102:103]', '.f[111]', '.f[113:114]', '.f[351:352]', '.f[356:357]', '.f[364:365]', '.f[373]', '.f[375:376]', '.f[431:432]', '.f[436:437]', 
+                    '.f[444:445]', '.f[453]', '.f[455:456]', '.f[348]', '.f[107]', '.f[4:7]', '.f[20:21]', '.f[27:29]', '.f[84:87]', '.f[100:101]', '.f[107:109]', '.f[346:349]', '.f[362:363]', '.f[369:371]', '.f[426:429]', '.f[442:443]', '.f[449:451]', '.f[700]', '.f[684]', '.f[684:700]']
+            faces = []
+            for face in facenums:
+                faces.append(appendName(name, face))
+            cmds.select(faces, r = True)
+            
+            cmds.hyperShade(assign = capShadingGroup)
+            cmds.select(name)
+            
+            #gills shader
+            
+            cmds.select(name)
+            
+            if x%3 != 0:
+                facenums = ['.f[260]', '.f[258]', '.f[167:168]', '.f[170:171]', '.f[186:187]', '.f[195]', '.f[197:198]', '.f[257:258]', '.f[260:261]', '.f[276:277]', '.f[285]', '.f[287:288]', '.f[509:510]', '.f[512:513]', '.f[528:529]', '.f[537]', '.f[539:540]', '.f[599:600]', '.f[602:603]', '.f[618:619]', '.f[627]', '.f[629:630]',
+                '.f[135]', '.f[127]', '.f[0:1]', '.f[38]', '.f[47]', '.f[50]', '.f[55]', '.f[58]', '.f[65]', '.f[74]', '.f[79]', '.f[118]', '.f[127]', '.f[130]', '.f[135]', '.f[138]', '.f[145]', '.f[154]', '.f[159]', '.f[342:343]', '.f[380]', '.f[389]', '.f[392]', '.f[397]', '.f[400]', '.f[407]', '.f[416]', '.f[421]', 
+                '.f[460]', '.f[469]', '.f[472]', '.f[477]', '.f[480]', '.f[487]', '.f[496]', '.f[501]', '.f[136]', '.f[132]', '.f[51:52]', '.f[56:57]', '.f[66:67]', '.f[76]', '.f[80:81]', '.f[131:132]', '.f[136:137]', '.f[146:147]', '.f[156]', '.f[160:161]', '.f[393:394]', '.f[398:399]', '.f[408:409]', '.f[418]',
+                 '.f[422:423]', '.f[473:474]', '.f[478:479]', '.f[488:489]', '.f[498]', '.f[502:503]', '.f[134]', '.f[128]', '.f[48:49]', '.f[53:54]', '.f[63:64]', '.f[75]', '.f[77:78]', '.f[128:129]', '.f[133:134]', '.f[143:144]', '.f[155]', '.f[157:158]', '.f[390:391]', '.f[395:396]', '.f[405:406]', '.f[417]',
+                 '.f[419:420]', '.f[470:471]', '.f[475:476]', '.f[485:486]', '.f[497]', '.f[499:500]', '.f[120]', '.f[124]', '.f[39:41]', '.f[44]', '.f[59:60]', '.f[68:69]', '.f[71]', '.f[119:121]', '.f[124]', '.f[139:140]', '.f[148:149]', '.f[151]', '.f[381:383]', '.f[386]', '.f[401:402]', '.f[410:411]', '.f[413]',
+                 '.f[461:463]', '.f[466]', '.f[481:482]', '.f[490:491]', '.f[493]']
+                faces = []
+                for face in facenums:
+                    faces.append(appendName(name, face))
+                cmds.select(faces, r = True)
+                
+                cmds.hyperShade(assign = gillsShadingGroup)
+            
+            #stem shader
+            facenumbers = ['.f[169]', '.f[164]', '.f[164:166]', '.f[169]', '.f[184:185]', '.f[193:194]', '.f[196]', '.f[254:256]', '.f[259]', '.f[274:275]', '.f[283:284]', '.f[286]', '.f[506:508]', '.f[511]', '.f[526:527]', '.f[535:536]', '.f[538]', '.f[596:598]', '.f[601]', '.f[616:617]', '.f[625:626]', '.f[628]', '.f[178]', 
+            '.f[179] ', '.f[173:174]', '.f[178:179]', '.f[188:189]', '.f[200]', '.f[202:203]', '.f[263:264]', '.f[268:269]', '.f[278:279]', '.f[290]', '.f[292:293]', '.f[515:516]', '.f[520:521]', '.f[530:531]', '.f[542]', '.f[544:545]', '.f[605:606]', '.f[610:611]', '.f[620:621]', '.f[632]', '.f[634:635]', '.f[181]', '.f[182]',
+            '.f[176:177]', '.f[181:182]', '.f[191:192]', '.f[201]', '.f[205:206]', '.f[266:267]', '.f[271:272]', '.f[281:282]', '.f[291]', '.f[295:296]', '.f[518:519]', '.f[523:524]', '.f[533:534]', '.f[543]', '.f[547:548]', '.f[608:609]', '.f[613:614]', '.f[623:624]', '.f[633]', '.f[637:638]', '.f[163]', '.f[180]', '.f[162:163]',
+            '.f[172]', '.f[175]', '.f[180]', '.f[183]', '.f[190]', '.f[199]', '.f[204]', '.f[252:253]', '.f[262]', '.f[265]', '.f[270]', '.f[273]', '.f[280]', '.f[289]', '.f[294]', '.f[504:505]', '.f[514]', '.f[517]', '.f[522]', '.f[525]', '.f[532]', '.f[541]', '.f[546]', '.f[594:595]', '.f[604]', '.f[607]', '.f[612]', '.f[615]', 
+            '.f[622]', '.f[631]', '.f[636]', '.f[214]', '.f[215]', '.f[209:210]', '.f[214:215]', '.f[229:230]', '.f[235]', '.f[237:238]', '.f[299:300]', '.f[304:305]', '.f[319:320]', '.f[325]', '.f[327:328]', '.f[551:552]', '.f[556:557]', '.f[571:572]', '.f[577]', '.f[579:580]', '.f[641:642]', '.f[646:647]', '.f[661:662]',
+             '.f[667]', '.f[669:670]', '.f[232]', '.f[218]', '.f[212:213]', '.f[217:218]', '.f[232:233]', '.f[236]', '.f[240:241]', '.f[302:303]', '.f[307:308]', '.f[322:323]', '.f[326]', '.f[330:331]', '.f[554:555]', '.f[559:560]', '.f[574:575]', '.f[578]', '.f[582:583]', '.f[644:645]', '.f[649:650]', '.f[664:665]', '.f[668]', 
+             '.f[672:673]', '.f[231]', '.f[207]', '.f[207:208]', '.f[211]', '.f[216]', '.f[227:228]', '.f[231]', '.f[234]', '.f[239]', '.f[297:298]', '.f[301]', '.f[306]', '.f[317:318]', '.f[321]', '.f[324]', '.f[329]', '.f[549:550]', '.f[553]', '.f[558]', '.f[569:570]', '.f[573]', '.f[576]', '.f[581]', '.f[639:640]', '.f[643]',
+             '.f[648]', '.f[659:660]', '.f[663]', '.f[666]', '.f[671]', '.f[242]', '.f[243]', '.f[219:220]', '.f[223:224]', '.f[242:243]', '.f[246]', '.f[248:249]', '.f[309:310]', '.f[313:314]', '.f[332:333]', '.f[336]', '.f[338:339]', '.f[561:562]', '.f[565:566]', '.f[584:585]', '.f[588]', '.f[590:591]', '.f[651:652]', '.f[655:656]',
+             '.f[674:675]', '.f[678]', '.f[680:681]', '.f[245]', '.f[244]', '.f[221:222]', '.f[225:226]', '.f[244:245]', '.f[247]', '.f[250:251]', '.f[311:312]', '.f[315:316]', '.f[334:335]', '.f[337]', '.f[340:341]', '.f[563:564]', '.f[567:568]', '.f[586:587]', '.f[589]', '.f[592:593]', '.f[653:654]', '.f[657:658]', '.f[676:677]',
+             '.f[679]', '.f[682:683]', '.f[701]', '.f[717]', '.f[701:717]']
+            faces = []
+            for face in facenumbers:
+                faces.append(appendName(name, face))
+            cmds.select(faces, r = True)
+            cmds.hyperShade(assign = stemShadingGroup)
         
-        
-        cmds.shadingNode('volumeNoise', asTexture = True, n='volumeNoise' + name)
-        cmds.shadingNode('place3dTexture', asUtility = True, n='place3dTexture' + name)
-        cmds.connectAttr('place3dTexture' + name + '.wim[0]', 'volumeNoise' + name + '.pm')
-        cmds.connectAttr('volumeNoise' + name + '.outColor', 'capshader' + name + '.baseColor', f=True)
-        
-        cmds.select('capshader' + name)
-        cmds.setAttr('volumeNoise' + name + '.defaultColor', 0.945, 0, 0, type='double3')
-        cmds.setAttr('volumeNoise' + name + '.colorOffset', 0.084, 0.0452593, 0.035868, type='double3')
-        cmds.setAttr('volumeNoise' + name + '.colorGain', 0.665, 0.24605, 0.24605, type='double3') 
-        '''
-        #cap shader
-        #capshader = cmds.shadingNode('aiStandardSurface', asShader = True, n='capshader' + name)
-        captexture = cmds.shadingNode('substanceNode', asTexture=True, n='substanceNode' + name)
-        cmds.shadingNode('place2dTexture', asUtility=True, n = 'place2dTexture' + name)
-        cmds.connectAttr('place2dTexture' + name + '.outUV', 'substanceNode' + name + '.uv')
-        cmds.connectAttr('place2dTexture' + name + '.outUvFilterSize', 'substanceNode' + name + '.uvFilterSize')
-        #load substance .sbar file
-        substanceFilename = 'E:\materials\mushrooomcap.sbsar'
-        cmds.substanceNodeLoadSubstance('substanceNode' + name, substanceFilename)
-        cmds.substanceNodeApplyWorkflow('substanceNode' + name, workflow = cmds.substanceGetWorkflow())
-        shadingGroup = findShadingGroup(captexture)
-        cmds.setAttr('substanceNode' + name + '.input_spotsScale', 6)
-        cmds.setAttr('substanceNode' + name + '.input_edgeWidth', 10)
-        cmds.setAttr('substanceNode' + name + '.input_randomseed', random.randint(1, 10000))
-        
-        cmds.select(name)
-        if x%3 == 0:
-            facenums = ['.f[387]', '.f[385]', '.f[42:43]', '.f[45:46]', '.f[61:62]', '.f[70]', '.f[72:73]', '.f[122:123]', '.f[125:126]', '.f[141:142]', '.f[150]', '.f[152:153]', '.f[384:385]', '.f[387:388]', '.f[403:404]', '.f[412]', '.f[414:415]', '.f[464:465]', '.f[467:468]', '.f[483:484]', '.f[492]', '.f[494:495]',
-                '.f[353]', '.f[350]', '.f[2:3]', '.f[8]', '.f[11]', '.f[16]', '.f[19]', '.f[24]', '.f[30]', '.f[35]', '.f[82:83]', '.f[88]', '.f[91]', '.f[96]', '.f[99]', '.f[104]', '.f[110]', '.f[115]', '.f[344:345]', '.f[350]', '.f[353]', '.f[358]', '.f[361]', '.f[366]', '.f[372]', '.f[377]', '.f[424:425]', '.f[430]', 
-                '.f[433]', '.f[438]', '.f[441]', '.f[446]', '.f[452]', '.f[457]', '.f[355]', '.f[354]', '.f[12:13]', '.f[17:18]', '.f[25:26]', '.f[32]', '.f[36:37]', '.f[92:93]', '.f[97:98]', '.f[105:106]', '.f[112]', '.f[116:117]', '.f[354:355]', '.f[359:360]', '.f[367:368]', '.f[374]', '.f[378:379]', '.f[434:435]', 
-                '.f[439:440]', '.f[447:448]', '.f[454]', '.f[458:459]', '.f[352]', '.f[351]', '.f[9:10]', '.f[14:15]', '.f[22:23]', '.f[31]', '.f[33:34]', '.f[89:90]', '.f[94:95]', '.f[102:103]', '.f[111]', '.f[113:114]', '.f[351:352]', '.f[356:357]', '.f[364:365]', '.f[373]', '.f[375:376]', '.f[431:432]', '.f[436:437]', 
-                '.f[444:445]', '.f[453]', '.f[455:456]', '.f[348]', '.f[107]', '.f[4:7]', '.f[20:21]', '.f[27:29]', '.f[84:87]', '.f[100:101]', '.f[107:109]', '.f[346:349]', '.f[362:363]', '.f[369:371]', '.f[426:429]', '.f[442:443]', '.f[449:451]', '.f[700]', '.f[684]', '.f[684:700]',
-                '.f[381]', '.f[386]', '.f[39:41]', '.f[44]', '.f[59:60]', '.f[68:69]', '.f[71]', '.f[119:121]', '.f[124]', '.f[139:140]', '.f[148:149]', '.f[151]', '.f[381:383]', '.f[386]', '.f[401:402]', '.f[410:411]', '.f[413]', '.f[461:463]', '.f[466]', '.f[481:482]', '.f[490:491]', '.f[493]', '.f[395]', '.f[396]', 
-                '.f[48:49]', '.f[53:54]', '.f[63:64]', '.f[75]', '.f[77:78]', '.f[128:129]', '.f[133:134]', '.f[143:144]', '.f[155]', '.f[157:158]', '.f[390:391]', '.f[395:396]', '.f[405:406]', '.f[417]', '.f[419:420]', '.f[470:471]', '.f[475:476]', '.f[485:486]', '.f[497]', '.f[499:500]', '.f[399]', '.f[398]', '.f[51:52]', 
-                '.f[56:57]', '.f[66:67]', '.f[76]', '.f[80:81]', '.f[131:132]', '.f[136:137]', '.f[146:147]', '.f[156]', '.f[160:161]', '.f[393:394]', '.f[398:399]', '.f[408:409]', '.f[418]', '.f[422:423]', '.f[473:474]', '.f[478:479]', '.f[488:489]', '.f[498]', '.f[502:503]', '.f[380]', '.f[397]', '.f[0:1]', '.f[38]', 
-                '.f[47]', '.f[50]', '.f[55]', '.f[58]', '.f[65]', '.f[74]', '.f[79]', '.f[118]', '.f[127]', '.f[130]', '.f[135]', '.f[138]', '.f[145]', '.f[154]', '.f[159]', '.f[342:343]', '.f[380]', '.f[389]', '.f[392]', '.f[397]', '.f[400]', '.f[407]', '.f[416]', '.f[421]', '.f[460]', '.f[469]', '.f[472]', '.f[477]', 
-                '.f[480]', '.f[487]', '.f[496]', '.f[501]', '.f[512]', '.f[513]', '.f[167:168]', '.f[170:171]', '.f[186:187]', '.f[195]', '.f[197:198]', '.f[257:258]', '.f[260:261]', '.f[276:277]', '.f[285]', '.f[287:288]', '.f[509:510]', '.f[512:513]', '.f[528:529]', '.f[537]', '.f[539:540]', '.f[599:600]', '.f[602:603]', 
-                '.f[618:619]', '.f[627]', '.f[629:630]']
-        else:
-            facenums = ['.f[387]', '.f[385]', '.f[42:43]', '.f[45:46]', '.f[61:62]', '.f[70]', '.f[72:73]', '.f[122:123]', '.f[125:126]', '.f[141:142]', '.f[150]', '.f[152:153]', '.f[384:385]', '.f[387:388]', '.f[403:404]', '.f[412]', '.f[414:415]', '.f[464:465]', '.f[467:468]', '.f[483:484]', '.f[492]', '.f[494:495]',
-                '.f[353]', '.f[350]', '.f[2:3]', '.f[8]', '.f[11]', '.f[16]', '.f[19]', '.f[24]', '.f[30]', '.f[35]', '.f[82:83]', '.f[88]', '.f[91]', '.f[96]', '.f[99]', '.f[104]', '.f[110]', '.f[115]', '.f[344:345]', '.f[350]', '.f[353]', '.f[358]', '.f[361]', '.f[366]', '.f[372]', '.f[377]', '.f[424:425]', '.f[430]', 
-                '.f[433]', '.f[438]', '.f[441]', '.f[446]', '.f[452]', '.f[457]', '.f[355]', '.f[354]', '.f[12:13]', '.f[17:18]', '.f[25:26]', '.f[32]', '.f[36:37]', '.f[92:93]', '.f[97:98]', '.f[105:106]', '.f[112]', '.f[116:117]', '.f[354:355]', '.f[359:360]', '.f[367:368]', '.f[374]', '.f[378:379]', '.f[434:435]', 
-                '.f[439:440]', '.f[447:448]', '.f[454]', '.f[458:459]', '.f[352]', '.f[351]', '.f[9:10]', '.f[14:15]', '.f[22:23]', '.f[31]', '.f[33:34]', '.f[89:90]', '.f[94:95]', '.f[102:103]', '.f[111]', '.f[113:114]', '.f[351:352]', '.f[356:357]', '.f[364:365]', '.f[373]', '.f[375:376]', '.f[431:432]', '.f[436:437]', 
-                '.f[444:445]', '.f[453]', '.f[455:456]', '.f[348]', '.f[107]', '.f[4:7]', '.f[20:21]', '.f[27:29]', '.f[84:87]', '.f[100:101]', '.f[107:109]', '.f[346:349]', '.f[362:363]', '.f[369:371]', '.f[426:429]', '.f[442:443]', '.f[449:451]', '.f[700]', '.f[684]', '.f[684:700]']
-        faces = []
-        for face in facenums:
-            faces.append(appendName(name, face))
-        cmds.select(faces)
-        #cmds.sets(forceElement = 'aiSurfaceShader' + name + 'SG')
-        cmds.hyperShade(assign = shadingGroup)
         
         #smooth
         cmds.select(name)
@@ -390,11 +437,7 @@ def createMushroom():
                  mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
                  cmds.editDisplayLayerMembers('LowPoly', name)
                  
-                 #setDisplayLayerVis(layer1, False)
-                 
                  cmds.editDisplayLayerMembers('HighPoly', inputname + "_HP" + str(x))
-                 
-                 #setDisplayLayerVis('HighPoly', True)
                  
             else:
                 mushroom = cmds.polySmooth(mth=0, sdt=2, ovb=1, ofb=3, ofc=0, ost=0, ocr=0, dv=2, bnr=1, c=1, kb=1, ksb=1, khe=0, kt=1, kmb=1, suv=1, peh=0, sl=1, dpe=1, ps=0.1, ro=1, ch=1)
