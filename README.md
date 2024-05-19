@@ -4,6 +4,11 @@ This is a Python plugin for Maya that allows the user to create quickly generate
 
 ![mushroomsimage2fx](https://github.com/raefu22/mushroomGenerator/assets/94275037/0b123bd3-5103-43be-a417-c7236c73f641)
 
+This Mushroom Generator was utilized in the process of creating the following render:
+
+![mushrooms_in_forest](https://github.com/raefu22/mushroomGenerator/assets/94275037/48e63983-2110-410f-9b07-a1febdd061ac)
+
+<br>
 
 ## FAQ
 
